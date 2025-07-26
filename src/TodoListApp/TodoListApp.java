@@ -297,6 +297,10 @@ public class TodoListApp extends javax.swing.JFrame {
         SpinnerNumberModel yearModel = new SpinnerNumberModel(calendar.get(java.util.Calendar.YEAR), 1900, 2100, 1);
         JSpinner yearSpinner = new JSpinner(yearModel);
         
+        // Remove comma from year display
+        JSpinner.NumberEditor yearEditor = new JSpinner.NumberEditor(yearSpinner, "#");
+        yearSpinner.setEditor(yearEditor);
+        
         monthCombo.setSelectedIndex(calendar.get(java.util.Calendar.MONTH));
         
         topPanel.add(new JLabel("Month:"));
@@ -360,8 +364,8 @@ public class TodoListApp extends javax.swing.JFrame {
                     newDate.set(year, month, selectedDay);
                     selectedDate = newDate.getTime();
                     
-                    // Update button text to show selected date
-                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+                    // Update button text to show selected date in DD/MM/YYYY format
+                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
                     eventDateButton.setText(sdf.format(selectedDate));
                     
                     calendarDialog.dispose();
@@ -386,7 +390,7 @@ public class TodoListApp extends javax.swing.JFrame {
         JButton todayButton = new JButton("Today");
         todayButton.addActionListener(e -> {
             selectedDate = new java.util.Date();
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
             eventDateButton.setText(sdf.format(selectedDate));
             calendarDialog.dispose();
         });
@@ -523,7 +527,7 @@ public class TodoListApp extends javax.swing.JFrame {
 
     private void addEvent() {
         String eventName = eventNameField.getText().trim();
-        java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("dd/MM/yyyy");
         String eventDate = dateFormat.format(selectedDate);
 
         if (!eventName.isEmpty()) {
