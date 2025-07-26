@@ -520,10 +520,16 @@ public class TodoListApp extends javax.swing.JFrame {
     private JButton createDeleteButton() {
         JButton deleteButton = new JButton();
         
-        // Create SVG-based icon
+        // Try to create PNG-based icon
         try {
             ImageIcon icon = createSVGIcon();
-            deleteButton.setIcon(icon);
+            if (icon != null) {
+                deleteButton.setIcon(icon);
+            } else {
+                // Fallback to Unicode trash icon
+                deleteButton.setText("🗑");
+                deleteButton.setFont(new java.awt.Font("Segoe UI Emoji", java.awt.Font.PLAIN, 12));
+            }
         } catch (Exception e) {
             // Fallback to Unicode trash icon
             deleteButton.setText("🗑");
@@ -558,39 +564,47 @@ public class TodoListApp extends javax.swing.JFrame {
     }
 
     private ImageIcon createSVGIcon() {
-        // Create a detailed trash can icon based on the uploaded SVG
-        int size = 16;
-        java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(size, size, java.awt.image.BufferedImage.TYPE_INT_ARGB);
-        java.awt.Graphics2D g2d = image.createGraphics();
+        try {
+            // Try multiple paths to load the delete PNG icon
+            String[] possiblePaths = {
+                "c:\\Users\\Apon\\Desktop\\JavaApplication1\\src\\images\\delete.png",
+                "src\\images\\delete.png",
+                "images\\delete.png",
+                "..\\images\\delete.png"
+            };
+            
+            for (String path : possiblePaths) {
+                java.io.File iconFile = new java.io.File(path);
+                if (iconFile.exists()) {
+                    ImageIcon originalIcon = new ImageIcon(iconFile.getAbsolutePath());
+                    // Check if the image loaded successfully
+                    if (originalIcon.getIconWidth() > 0 && originalIcon.getIconHeight() > 0) {
+                        java.awt.Image scaledImage = originalIcon.getImage().getScaledInstance(16, 16, java.awt.Image.SCALE_SMOOTH);
+                        return new ImageIcon(scaledImage);
+                    }
+                }
+            }
+            
+            // Try loading from classpath
+            try {
+                java.net.URL iconURL = getClass().getClassLoader().getResource("images/delete.png");
+                if (iconURL != null) {
+                    ImageIcon originalIcon = new ImageIcon(iconURL);
+                    if (originalIcon.getIconWidth() > 0 && originalIcon.getIconHeight() > 0) {
+                        java.awt.Image scaledImage = originalIcon.getImage().getScaledInstance(16, 16, java.awt.Image.SCALE_SMOOTH);
+                        return new ImageIcon(scaledImage);
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Classpath loading failed: " + e.getMessage());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error loading delete.png: " + e.getMessage());
+        }
         
-        // Enable antialiasing for smooth edges
-        g2d.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-        
-        // Set the trash can color to match the new SVG (#fb0005)
-        g2d.setColor(new java.awt.Color(251, 0, 5)); // Red color #fb0005
-        
-        // Draw trash can handle (top small rectangle)
-        g2d.fillRoundRect(5, 1, 6, 2, 1, 1);
-        
-        // Draw trash can lid (wider rectangle)
-        g2d.fillRoundRect(2, 3, 12, 2, 1, 1);
-        
-        // Draw main trash can body (larger rectangle)
-        g2d.fillRoundRect(3, 5, 10, 9, 2, 2);
-        
-        // Draw vertical deletion lines inside trash can (white lines)
-        g2d.setColor(java.awt.Color.WHITE);
-        g2d.setStroke(new java.awt.BasicStroke(1.0f));
-        
-        // Left vertical line
-        g2d.drawLine(5, 7, 5, 12);
-        // Center vertical line  
-        g2d.drawLine(8, 7, 8, 12);
-        // Right vertical line
-        g2d.drawLine(11, 7, 11, 12);
-        
-        g2d.dispose();
-        return new ImageIcon(image);
+        // Fallback: Use Unicode trash emoji
+        return null; // This will trigger the fallback text in createDeleteButton
     }
 
     private void deleteTask(String eventName, String taskText, boolean isCompleted) {
