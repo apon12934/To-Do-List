@@ -497,6 +497,14 @@ public class TodoListApp extends javax.swing.JFrame {
         completedScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         completedScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         
+        // Set white background for the panels and scroll panes
+        todoPanel.setBackground(Color.WHITE);
+        completedPanel.setBackground(Color.WHITE);
+        todoScrollPane.setBackground(Color.WHITE);
+        completedScrollPane.setBackground(Color.WHITE);
+        todoScrollPane.getViewport().setBackground(Color.WHITE);
+        completedScrollPane.getViewport().setBackground(Color.WHITE);
+        
         // Set scroll unit increments for smoother scrolling
         todoScrollPane.getVerticalScrollBar().setUnitIncrement(16);
         completedScrollPane.getVerticalScrollBar().setUnitIncrement(16);
