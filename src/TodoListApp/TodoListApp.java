@@ -558,7 +558,7 @@ public class TodoListApp extends javax.swing.JFrame {
     }
 
     private ImageIcon createSVGIcon() {
-        // Create a simple trash can icon using Java Graphics2D
+        // Create a detailed trash can icon based on the uploaded SVG
         int size = 16;
         java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(size, size, java.awt.image.BufferedImage.TYPE_INT_ARGB);
         java.awt.Graphics2D g2d = image.createGraphics();
@@ -566,27 +566,28 @@ public class TodoListApp extends javax.swing.JFrame {
         // Enable antialiasing for smooth edges
         g2d.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
         
-        // Set the trash can color
-        g2d.setColor(new java.awt.Color(255, 68, 68)); // Red color #ff4444
+        // Set the trash can color to match the new SVG (#fb0005)
+        g2d.setColor(new java.awt.Color(251, 0, 5)); // Red color #fb0005
         
-        // Draw trash can body (rectangle)
-        g2d.fillRoundRect(3, 5, 10, 9, 2, 2);
+        // Draw trash can handle (top small rectangle)
+        g2d.fillRoundRect(5, 1, 6, 2, 1, 1);
         
-        // Draw trash can lid
+        // Draw trash can lid (wider rectangle)
         g2d.fillRoundRect(2, 3, 12, 2, 1, 1);
         
-        // Draw handle
-        g2d.setStroke(new java.awt.BasicStroke(1.5f));
-        g2d.drawLine(6, 1, 6, 3);
-        g2d.drawLine(10, 1, 10, 3);
-        g2d.drawLine(6, 1, 10, 1);
+        // Draw main trash can body (larger rectangle)
+        g2d.fillRoundRect(3, 5, 10, 9, 2, 2);
         
-        // Draw vertical lines inside trash can
+        // Draw vertical deletion lines inside trash can (white lines)
         g2d.setColor(java.awt.Color.WHITE);
         g2d.setStroke(new java.awt.BasicStroke(1.0f));
-        g2d.drawLine(6, 7, 6, 12);
+        
+        // Left vertical line
+        g2d.drawLine(5, 7, 5, 12);
+        // Center vertical line  
         g2d.drawLine(8, 7, 8, 12);
-        g2d.drawLine(10, 7, 10, 12);
+        // Right vertical line
+        g2d.drawLine(11, 7, 11, 12);
         
         g2d.dispose();
         return new ImageIcon(image);
