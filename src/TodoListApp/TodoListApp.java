@@ -488,6 +488,9 @@ public class TodoListApp extends javax.swing.JFrame {
         // Apply basic font improvements (NetBeans compatible)
         applyBasicFonts();
         
+        // Add Enter key listeners for text fields
+        setupEnterKeyListeners();
+        
         // Configure scroll panes for better behavior
         todoScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         todoScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -521,6 +524,20 @@ public class TodoListApp extends javax.swing.JFrame {
             // If font setting fails, continue without custom fonts
             System.out.println("Font setting failed, using defaults");
         }
+    }
+    
+    private void setupEnterKeyListeners() {
+        // Add Enter key listener for event name field
+        eventNameField.addActionListener(e -> {
+            // Trigger calendar popup when Enter is pressed
+            openCalendarDialog();
+        });
+        
+        // Add Enter key listener for task field
+        taskField.addActionListener(e -> {
+            // Trigger add task when Enter is pressed
+            addTask();
+        });
     }
     
     private void setupEventListeners() {
