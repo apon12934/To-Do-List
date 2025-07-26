@@ -583,10 +583,22 @@ public class TodoListApp extends javax.swing.JFrame {
                 eventCompletedTasks.put(eventName, new ArrayList<>());
                 eventDates.put(eventName, eventDate);
 
+                // Clear the event name field
                 eventNameField.setText("");
                 // Reset date button text to default
                 eventDateButton.setText("Select Date");
                 selectedDate = new java.util.Date(); // Reset to current date
+                
+                // Automatically select the newly created event
+                eventList.setSelectedValue(eventName, true);
+                
+                // Load tasks for the newly selected event (this will update the UI)
+                loadTasksForEvent(eventName);
+                
+                // Focus on the task field for immediate task entry
+                SwingUtilities.invokeLater(() -> {
+                    taskField.requestFocusInWindow();
+                });
             } else {
                 JOptionPane.showMessageDialog(this, "Event already exists!", "Error", JOptionPane.ERROR_MESSAGE);
             }
