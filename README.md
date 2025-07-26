@@ -193,9 +193,9 @@ If you encounter any issues or have questions:
 
 **Al Amin Islam Apon**
 
-- 📘 **Facebook**: [apon.xox](https://facebook.com/apon.xox)
-- 💬 **WhatsApp**: [wa.me/8801927041100](https://wa.me/8801927041100)
-- 💻 **GitHub**: [apon12934](https://github.com/apon12934)
+- 📘 **Facebook**: <a href="https://facebook.com/apon.xox" target="_blank">apon.xox</a>
+- 💬 **WhatsApp**: <a href="https://wa.me/8801927041100" target="_blank">wa.me/8801927041100</a>
+- 💻 **GitHub**: <a href="https://github.com/apon12934" target="_blank">apon12934</a>
 
 ---
 
