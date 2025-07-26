@@ -58,7 +58,6 @@ public class TodoListApp extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         eventDateField = new javax.swing.JTextField();
         addEventButton = new javax.swing.JButton();
-        deleteEventButton = new javax.swing.JButton();
         taskPanel = new javax.swing.JPanel();
         eventInfoPanel = new javax.swing.JPanel();
         selectedEventTitle = new javax.swing.JLabel();
@@ -93,13 +92,6 @@ public class TodoListApp extends javax.swing.JFrame {
             }
         });
 
-        deleteEventButton.setText("Delete Event");
-        deleteEventButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteEventButtonActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout eventPanelLayout = new javax.swing.GroupLayout(eventPanel);
         eventPanel.setLayout(eventPanelLayout);
         eventPanelLayout.setHorizontalGroup(
@@ -110,10 +102,7 @@ public class TodoListApp extends javax.swing.JFrame {
                 .addGroup(eventPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(eventNameField)
                     .addComponent(eventDateField)
-                    .addGroup(eventPanelLayout.createSequentialGroup()
-                        .addComponent(addEventButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(deleteEventButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(addEventButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(eventPanelLayout.createSequentialGroup()
                         .addGroup(eventPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
@@ -134,9 +123,7 @@ public class TodoListApp extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(eventDateField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(eventPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(addEventButton)
-                    .addComponent(deleteEventButton))
+                .addComponent(addEventButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -318,7 +305,6 @@ public class TodoListApp extends javax.swing.JFrame {
     private javax.swing.JButton addTaskButton;
     private javax.swing.JPanel completedPanel;
     private javax.swing.JScrollPane completedScrollPane;
-    private javax.swing.JButton deleteEventButton;
     private javax.swing.JTextField eventDateField;
     private javax.swing.JPanel eventInfoPanel;
     private javax.swing.JList<String> eventList;
@@ -333,8 +319,8 @@ public class TodoListApp extends javax.swing.JFrame {
     private javax.swing.JButton saveButton;
     private javax.swing.JLabel selectedEventDate;
     private javax.swing.JLabel selectedEventTitle;
-    private javax.swing.JTextField taskField;
     private javax.swing.JPanel taskControlsPanel;
+    private javax.swing.JTextField taskField;
     private javax.swing.JPanel taskPanel;
     private javax.swing.JPanel todoPanel;
     private javax.swing.JScrollPane todoScrollPane;
@@ -344,6 +330,16 @@ public class TodoListApp extends javax.swing.JFrame {
         // Initialize the list model and set it to the event list
         eventListModel = new DefaultListModel<>();
         eventList.setModel(eventListModel);
+        
+        // Configure scroll panes for better behavior
+        todoScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        todoScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        completedScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        completedScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        
+        // Set scroll unit increments for smoother scrolling
+        todoScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        completedScrollPane.getVerticalScrollBar().setUnitIncrement(16);
     }
     
     private void setupEventListeners() {
@@ -475,6 +471,11 @@ public class TodoListApp extends javax.swing.JFrame {
         JPanel panel = new JPanel();
         panel.setLayout(new java.awt.BorderLayout());
         panel.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        
+        // Set fixed height for consistent sizing
+        panel.setPreferredSize(new java.awt.Dimension(0, 30));
+        panel.setMinimumSize(new java.awt.Dimension(0, 30));
+        panel.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 30));
 
         JCheckBox checkBox = new JCheckBox(taskText);
         checkBox.setSelected(isCompleted);
@@ -502,7 +503,10 @@ public class TodoListApp extends javax.swing.JFrame {
             deleteButton.setFont(new java.awt.Font("Segoe UI Emoji", java.awt.Font.PLAIN, 12));
         }
         
-        deleteButton.setPreferredSize(new java.awt.Dimension(30, 25));
+        // Set fixed size for consistency
+        deleteButton.setPreferredSize(new java.awt.Dimension(26, 26));
+        deleteButton.setMinimumSize(new java.awt.Dimension(26, 26));
+        deleteButton.setMaximumSize(new java.awt.Dimension(26, 26));
         deleteButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
         deleteButton.setToolTipText("Delete task");
         deleteButton.setBorderPainted(false);
