@@ -4,6 +4,7 @@
  */
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.*;
@@ -58,7 +59,6 @@ public class TodoListApp extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         eventDateField = new javax.swing.JTextField();
         addEventButton = new javax.swing.JButton();
-        deleteEventButton = new javax.swing.JButton();
         taskPanel = new javax.swing.JPanel();
         eventInfoPanel = new javax.swing.JPanel();
         selectedEventTitle = new javax.swing.JLabel();
@@ -93,13 +93,6 @@ public class TodoListApp extends javax.swing.JFrame {
             }
         });
 
-        deleteEventButton.setToolTipText("Delete Event");
-        deleteEventButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteEventButtonActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout eventPanelLayout = new javax.swing.GroupLayout(eventPanel);
         eventPanel.setLayout(eventPanelLayout);
         eventPanelLayout.setHorizontalGroup(
@@ -110,11 +103,7 @@ public class TodoListApp extends javax.swing.JFrame {
                 .addGroup(eventPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(eventNameField)
                     .addComponent(eventDateField)
-                    .addGroup(eventPanelLayout.createSequentialGroup()
-                        .addComponent(addEventButton, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(deleteEventButton, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(addEventButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(eventPanelLayout.createSequentialGroup()
                         .addGroup(eventPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
@@ -135,9 +124,7 @@ public class TodoListApp extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(eventDateField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(eventPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(addEventButton)
-                    .addComponent(deleteEventButton))
+                .addComponent(addEventButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -319,7 +306,6 @@ public class TodoListApp extends javax.swing.JFrame {
     private javax.swing.JButton addTaskButton;
     private javax.swing.JPanel completedPanel;
     private javax.swing.JScrollPane completedScrollPane;
-    private javax.swing.JButton deleteEventButton;
     private javax.swing.JTextField eventDateField;
     private javax.swing.JPanel eventInfoPanel;
     private javax.swing.JList<String> eventList;
@@ -346,36 +332,11 @@ public class TodoListApp extends javax.swing.JFrame {
         eventListModel = new DefaultListModel<>();
         eventList.setModel(eventListModel);
         
-        // Configure the delete event button with the same icon as task delete buttons
-        try {
-            ImageIcon icon = createSVGIcon();
-            deleteEventButton.setIcon(icon);
-        } catch (Exception e) {
-            deleteEventButton.setText("🗑");
-            deleteEventButton.setFont(new java.awt.Font("Segoe UI Emoji", java.awt.Font.PLAIN, 12));
-        }
+        // Set custom cell renderer for events with delete buttons
+        eventList.setCellRenderer(new EventListCellRenderer());
         
-        // Set fixed size for the delete event button
-        deleteEventButton.setPreferredSize(new java.awt.Dimension(35, 26));
-        deleteEventButton.setMinimumSize(new java.awt.Dimension(35, 26));
-        deleteEventButton.setMaximumSize(new java.awt.Dimension(35, 26));
-        deleteEventButton.setBorderPainted(false);
-        deleteEventButton.setContentAreaFilled(false);
-        deleteEventButton.setFocusPainted(false);
-        
-        // Add hover effect to delete event button
-        deleteEventButton.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                deleteEventButton.setContentAreaFilled(true);
-                deleteEventButton.setBackground(new java.awt.Color(255, 200, 200));
-            }
-            
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                deleteEventButton.setContentAreaFilled(false);
-            }
-        });
+        // Set larger row height for better appearance
+        eventList.setFixedCellHeight(40);
         
         // Configure scroll panes for better behavior
         todoScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -394,6 +355,26 @@ public class TodoListApp extends javax.swing.JFrame {
                 String selectedEvent = eventList.getSelectedValue();
                 if (selectedEvent != null) {
                     loadTasksForEvent(selectedEvent);
+                }
+            }
+        });
+        
+        // Add mouse listener to handle delete button clicks
+        eventList.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                int index = eventList.locationToIndex(e.getPoint());
+                if (index >= 0) {
+                    Rectangle cellBounds = eventList.getCellBounds(index, index);
+                    if (cellBounds != null) {
+                        // Check if click is in the delete button area (right side of cell)
+                        int deleteButtonX = cellBounds.x + cellBounds.width - 35; // 35px for button + padding
+                        if (e.getX() >= deleteButtonX && e.getX() <= cellBounds.x + cellBounds.width) {
+                            // Click was on delete button
+                            String eventName = eventListModel.getElementAt(index);
+                            deleteSpecificEvent(eventName);
+                        }
+                    }
                 }
             }
         });
@@ -658,6 +639,90 @@ public class TodoListApp extends javax.swing.JFrame {
 
             // Refresh the display
             SwingUtilities.invokeLater(() -> loadTasksForEvent(eventName));
+        }
+    }
+    
+    // Custom cell renderer for event list with delete buttons
+    private class EventListCellRenderer extends JPanel implements ListCellRenderer<String> {
+        private JLabel eventLabel;
+        private JButton deleteButton;
+        
+        public EventListCellRenderer() {
+            setLayout(new BorderLayout());
+            setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+            
+            eventLabel = new JLabel();
+            eventLabel.setOpaque(false);
+            
+            deleteButton = createDeleteButton();
+            deleteButton.setToolTipText("Delete event");
+            
+            add(eventLabel, BorderLayout.CENTER);
+            add(deleteButton, BorderLayout.EAST);
+        }
+        
+        @Override
+        public Component getListCellRendererComponent(JList<? extends String> list, String value,
+                int index, boolean isSelected, boolean cellHasFocus) {
+            
+            eventLabel.setText(value);
+            
+            if (isSelected) {
+                setBackground(list.getSelectionBackground());
+                eventLabel.setForeground(list.getSelectionForeground());
+            } else {
+                setBackground(list.getBackground());
+                eventLabel.setForeground(list.getForeground());
+            }
+            
+            setOpaque(isSelected);
+            return this;
+        }
+    }
+    
+    private void deleteSpecificEvent(String eventName) {
+        int result = JOptionPane.showConfirmDialog(this, 
+            "Are you sure you want to delete event '" + eventName + "' and all its tasks?", 
+            "Confirm Delete", 
+            JOptionPane.YES_NO_OPTION);
+
+        if (result == JOptionPane.YES_OPTION) {
+            // Remove from UI
+            eventListModel.removeElement(eventName);
+            
+            // Remove from data structures
+            eventTasks.remove(eventName);
+            eventCompletedTasks.remove(eventName);
+            eventDates.remove(eventName);
+            
+            // Delete files
+            try {
+                File taskFile = new File(eventName + ".txt");
+                File completedFile = new File("COMPLETED_" + eventName + ".txt");
+                
+                if (taskFile.exists()) {
+                    taskFile.delete();
+                }
+                if (completedFile.exists()) {
+                    completedFile.delete();
+                }
+            } catch (Exception e) {
+                System.err.println("Error deleting files for " + eventName + ": " + e.getMessage());
+            }
+            
+            // Clear task panels if this was the selected event
+            String selectedEvent = eventList.getSelectedValue();
+            if (selectedEvent == null || selectedEvent.equals(eventName)) {
+                todoPanel.removeAll();
+                completedPanel.removeAll();
+                selectedEventTitle.setText("Event: No event selected");
+                selectedEventDate.setText("Date:");
+                
+                todoPanel.revalidate();
+                todoPanel.repaint();
+                completedPanel.revalidate();
+                completedPanel.repaint();
+            }
         }
     }
 
