@@ -1029,11 +1029,7 @@ public class TodoListApp extends javax.swing.JFrame {
         buttonPanel.setOpaque(false);
         
         // Edit button
-        JButton editButton = new JButton("✏");
-        editButton.setPreferredSize(new java.awt.Dimension(26, 26));
-        editButton.setToolTipText("Edit task");
-        editButton.setBorderPainted(false);
-        editButton.setContentAreaFilled(false);
+        JButton editButton = createEditButton();
         editButton.addActionListener(evt -> editTask(eventName, task));
         
         JButton deleteButton = createDeleteButton();
@@ -1047,6 +1043,52 @@ public class TodoListApp extends javax.swing.JFrame {
         panel.add(buttonPanel, BorderLayout.EAST);
 
         return panel;
+    }
+
+    private JButton createEditButton() {
+        JButton editButton = new JButton();
+        
+        // Try to create icon-based edit button
+        try {
+            ImageIcon icon = createEditIcon();
+            if (icon != null) {
+                editButton.setIcon(icon);
+            } else {
+                // Fallback to Unicode edit icon
+                editButton.setText("✏");
+                editButton.setFont(new java.awt.Font("Segoe UI Emoji", java.awt.Font.PLAIN, 14));
+            }
+        } catch (Exception e) {
+            // Fallback to Unicode edit icon
+            editButton.setText("✏");
+            editButton.setFont(new java.awt.Font("Segoe UI Emoji", java.awt.Font.PLAIN, 14));
+        }
+        
+        // Set fixed size for consistency
+        editButton.setPreferredSize(new java.awt.Dimension(26, 26));
+        editButton.setMinimumSize(new java.awt.Dimension(26, 26));
+        editButton.setMaximumSize(new java.awt.Dimension(26, 26));
+        editButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        editButton.setToolTipText("Edit task");
+        editButton.setBorderPainted(false);
+        editButton.setContentAreaFilled(false);
+        editButton.setFocusPainted(false);
+        
+        // Add hover effect
+        editButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                editButton.setContentAreaFilled(true);
+                editButton.setBackground(new java.awt.Color(200, 230, 255));
+            }
+            
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                editButton.setContentAreaFilled(false);
+            }
+        });
+        
+        return editButton;
     }
 
     private JButton createDeleteButton() {
@@ -1093,6 +1135,50 @@ public class TodoListApp extends javax.swing.JFrame {
         });
         
         return deleteButton;
+    }
+
+    private ImageIcon createEditIcon() {
+        try {
+            // Try multiple paths to load the edit PNG icon
+            String[] possiblePaths = {
+                "c:\\Users\\Apon\\Desktop\\JavaApplication1\\src\\images\\edit.png",
+                "src\\images\\edit.png",
+                "images\\edit.png",
+                "..\\images\\edit.png"
+            };
+            
+            for (String path : possiblePaths) {
+                java.io.File iconFile = new java.io.File(path);
+                if (iconFile.exists()) {
+                    ImageIcon originalIcon = new ImageIcon(iconFile.getAbsolutePath());
+                    // Check if the image loaded successfully
+                    if (originalIcon.getIconWidth() > 0 && originalIcon.getIconHeight() > 0) {
+                        java.awt.Image scaledImage = originalIcon.getImage().getScaledInstance(16, 16, java.awt.Image.SCALE_SMOOTH);
+                        return new ImageIcon(scaledImage);
+                    }
+                }
+            }
+            
+            // Try loading from classpath
+            try {
+                java.net.URL iconURL = getClass().getClassLoader().getResource("images/edit.png");
+                if (iconURL != null) {
+                    ImageIcon originalIcon = new ImageIcon(iconURL);
+                    if (originalIcon.getIconWidth() > 0 && originalIcon.getIconHeight() > 0) {
+                        java.awt.Image scaledImage = originalIcon.getImage().getScaledInstance(16, 16, java.awt.Image.SCALE_SMOOTH);
+                        return new ImageIcon(scaledImage);
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Classpath loading failed: " + e.getMessage());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error loading edit.png: " + e.getMessage());
+        }
+        
+        // Fallback: Use Unicode edit emoji
+        return null; // This will trigger the fallback text in createEditButton
     }
 
     private ImageIcon createSVGIcon() {
