@@ -676,20 +676,22 @@ public class TodoListApp extends javax.swing.JFrame {
         todoPanel.removeAll();
         completedPanel.removeAll();
 
-        // Add pending tasks
+        // Add pending tasks with zebra striping
         List<String> tasks = eventTasks.get(eventName);
         if (tasks != null) {
-            for (String task : tasks) {
-                JPanel taskPanel = createTaskPanel(eventName, task, false);
+            for (int i = 0; i < tasks.size(); i++) {
+                String task = tasks.get(i);
+                JPanel taskPanel = createTaskPanel(eventName, task, false, i);
                 todoPanel.add(taskPanel);
             }
         }
 
-        // Add completed tasks
+        // Add completed tasks with zebra striping
         List<String> completedTasks = eventCompletedTasks.get(eventName);
         if (completedTasks != null) {
-            for (String task : completedTasks) {
-                JPanel taskPanel = createTaskPanel(eventName, task, true);
+            for (int i = 0; i < completedTasks.size(); i++) {
+                String task = completedTasks.get(i);
+                JPanel taskPanel = createTaskPanel(eventName, task, true, i);
                 completedPanel.add(taskPanel);
             }
         }
@@ -700,7 +702,7 @@ public class TodoListApp extends javax.swing.JFrame {
         completedPanel.repaint();
     }
 
-    private JPanel createTaskPanel(String eventName, String taskText, boolean isCompleted) {
+    private JPanel createTaskPanel(String eventName, String taskText, boolean isCompleted, int rowIndex) {
         JPanel panel = new JPanel();
         panel.setLayout(new java.awt.BorderLayout());
         panel.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 2, 2, 2));
@@ -710,8 +712,19 @@ public class TodoListApp extends javax.swing.JFrame {
         panel.setMinimumSize(new java.awt.Dimension(0, 35));
         panel.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 35));
 
+        // Apply zebra striping - alternating white and light grey
+        if (rowIndex % 2 == 0) {
+            panel.setBackground(Color.WHITE);
+        } else {
+            panel.setBackground(new Color(245, 245, 245)); // Light grey
+        }
+        panel.setOpaque(true);
+
         JCheckBox checkBox = new JCheckBox(taskText);
         checkBox.setSelected(isCompleted);
+        
+        // Make checkbox background transparent to show panel background
+        checkBox.setOpaque(false);
         
         // Apply font safely to avoid NetBeans conflicts
         try {
