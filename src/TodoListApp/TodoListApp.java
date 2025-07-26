@@ -1412,16 +1412,16 @@ public class TodoListApp extends javax.swing.JFrame {
         gbc.gridx = 1;
         JButton dueDateButton = new JButton("Select Date");
         if (task.getDueDate() != null) {
-            SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
             dueDateButton.setText(sdf.format(task.getDueDate()));
         }
         
         dueDateButton.addActionListener(e -> {
-            java.util.Date selectedDate = showDatePicker(task.getDueDate());
-            if (selectedDate != null) {
-                task.setDueDate(selectedDate);
-                SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
-                dueDateButton.setText(sdf.format(selectedDate));
+            java.util.Date selectedDueDate = showCalendarDialog(task.getDueDate());
+            if (selectedDueDate != null) {
+                task.setDueDate(selectedDueDate);
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                dueDateButton.setText(sdf.format(selectedDueDate));
             }
         });
         panel.add(dueDateButton, gbc);
@@ -1527,6 +1527,149 @@ public class TodoListApp extends javax.swing.JFrame {
         dialog.setVisible(true);
         
         return result[0];
+    }
+    
+    private java.util.Date showCalendarDialog(java.util.Date initialDate) {
+        // Create a custom calendar dialog similar to the event date calendar
+        JDialog calendarDialog = new JDialog(this, "Select Due Date", true);
+        calendarDialog.setSize(350, 400);
+        calendarDialog.setLocationRelativeTo(this);
+        
+        // Create calendar components
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+        if (initialDate != null) {
+            calendar.setTime(initialDate);
+        }
+        
+        // Month and Year selection
+        JPanel topPanel = new JPanel(new FlowLayout());
+        String[] months = {"January", "February", "March", "April", "May", "June",
+                          "July", "August", "September", "October", "November", "December"};
+        JComboBox<String> monthCombo = new JComboBox<>(months);
+        
+        SpinnerNumberModel yearModel = new SpinnerNumberModel(calendar.get(java.util.Calendar.YEAR), 1900, 2100, 1);
+        JSpinner yearSpinner = new JSpinner(yearModel);
+        
+        // Remove comma from year display
+        JSpinner.NumberEditor yearEditor = new JSpinner.NumberEditor(yearSpinner, "#");
+        yearSpinner.setEditor(yearEditor);
+        
+        monthCombo.setSelectedIndex(calendar.get(java.util.Calendar.MONTH));
+        
+        JLabel monthLabel = new JLabel("Month:");
+        JLabel yearLabel = new JLabel("Year:");
+        
+        topPanel.add(monthLabel);
+        topPanel.add(monthCombo);
+        topPanel.add(yearLabel);
+        topPanel.add(yearSpinner);
+        
+        // Calendar grid
+        JPanel calendarPanel = new JPanel(new GridLayout(7, 7, 2, 2));
+        calendarPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        // Day headers
+        String[] dayHeaders = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+        for (String day : dayHeaders) {
+            JLabel label = new JLabel(day, SwingConstants.CENTER);
+            calendarPanel.add(label);
+        }
+        
+        // Store the selected date
+        final java.util.Date[] selectedDueDate = {initialDate};
+        
+        // Function to update calendar
+        Runnable updateCalendar = () -> {
+            // Remove existing day components (keep headers)
+            Component[] components = calendarPanel.getComponents();
+            for (int i = 7; i < components.length; i++) {
+                calendarPanel.remove(components[i]);
+            }
+            
+            int month = monthCombo.getSelectedIndex();
+            int year = (Integer) yearSpinner.getValue();
+            
+            java.util.Calendar cal = java.util.Calendar.getInstance();
+            cal.set(year, month, 1);
+            
+            int startDay = cal.get(java.util.Calendar.DAY_OF_WEEK) - 1;
+            int daysInMonth = cal.getActualMaximum(java.util.Calendar.DAY_OF_MONTH);
+            
+            // Add empty cells for days before month starts
+            for (int i = 0; i < startDay; i++) {
+                calendarPanel.add(new JLabel(""));
+            }
+            
+            // Add day buttons
+            for (int day = 1; day <= daysInMonth; day++) {
+                JButton dayButton = new JButton(String.valueOf(day));
+                dayButton.setPreferredSize(new Dimension(40, 30));
+                
+                // Highlight selected date
+                if (selectedDueDate[0] != null) {
+                    java.util.Calendar selectedCal = java.util.Calendar.getInstance();
+                    selectedCal.setTime(selectedDueDate[0]);
+                    if (selectedCal.get(java.util.Calendar.YEAR) == year &&
+                        selectedCal.get(java.util.Calendar.MONTH) == month &&
+                        selectedCal.get(java.util.Calendar.DAY_OF_MONTH) == day) {
+                        dayButton.setBackground(Color.BLUE);
+                        dayButton.setForeground(Color.WHITE);
+                        dayButton.setOpaque(true);
+                    }
+                }
+                
+                final int selectedDay = day;
+                dayButton.addActionListener(e -> {
+                    java.util.Calendar newDate = java.util.Calendar.getInstance();
+                    newDate.set(year, month, selectedDay);
+                    selectedDueDate[0] = newDate.getTime();
+                    calendarDialog.dispose();
+                });
+                
+                calendarPanel.add(dayButton);
+            }
+            
+            calendarPanel.revalidate();
+            calendarPanel.repaint();
+        };
+        
+        // Add listeners for month/year changes
+        monthCombo.addActionListener(e -> updateCalendar.run());
+        yearSpinner.addChangeListener(e -> updateCalendar.run());
+        
+        // Initial calendar setup
+        updateCalendar.run();
+        
+        // Bottom panel with buttons
+        JPanel bottomPanel = new JPanel(new FlowLayout());
+        JButton todayButton = new JButton("Today");
+        todayButton.addActionListener(e -> {
+            selectedDueDate[0] = new java.util.Date();
+            calendarDialog.dispose();
+        });
+        
+        JButton clearButton = new JButton("Clear");
+        clearButton.addActionListener(e -> {
+            selectedDueDate[0] = null;
+            calendarDialog.dispose();
+        });
+        
+        JButton cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(e -> calendarDialog.dispose());
+        
+        bottomPanel.add(todayButton);
+        bottomPanel.add(clearButton);
+        bottomPanel.add(cancelButton);
+        
+        // Layout dialog
+        calendarDialog.setLayout(new BorderLayout());
+        calendarDialog.add(topPanel, BorderLayout.NORTH);
+        calendarDialog.add(calendarPanel, BorderLayout.CENTER);
+        calendarDialog.add(bottomPanel, BorderLayout.SOUTH);
+        
+        calendarDialog.setVisible(true);
+        
+        return selectedDueDate[0];
     }
     
     private void editTask(String eventName, Task task) {
