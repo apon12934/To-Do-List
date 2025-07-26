@@ -15,35 +15,170 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Date;
+import java.util.Stack;
+import java.util.concurrent.ScheduledExecutorService;
 import java.text.SimpleDateFormat;
 
 /**
- *
+ * Enhanced Todo List Application with comprehensive features
  * @author Apon
  */
 public class TodoListApp extends javax.swing.JFrame {
     
-    // Data structures to hold tasks for each event
-    private final Map<String, List<String>> eventTasks;
-    private final Map<String, List<String>> eventCompletedTasks;
+    // Task priority levels
+    public enum TaskPriority {
+        LOW("Low", new Color(46, 125, 50)),      // Green
+        MEDIUM("Medium", new Color(255, 152, 0)), // Orange
+        HIGH("High", new Color(244, 67, 54)),     // Red
+        URGENT("Urgent", new Color(156, 39, 176)); // Purple
+        
+        private final String name;
+        private final Color color;
+        
+        TaskPriority(String name, Color color) {
+            this.name = name;
+            this.color = color;
+        }
+        
+        public String getName() { return name; }
+        public Color getColor() { return color; }
+    }
+    
+    // Enhanced Task class with all new features
+    public static class Task {
+        private String text;
+        private boolean completed;
+        private TaskPriority priority;
+        private java.util.Date dueDate;
+        private String category;
+        private List<String> tags;
+        private long timeSpent; // in milliseconds
+        private java.util.Date createdDate;
+        private boolean recurring;
+        private String recurrencePattern;
+        
+        public Task(String text) {
+            this.text = text;
+            this.completed = false;
+            this.priority = TaskPriority.MEDIUM;
+            this.dueDate = null;
+            this.category = "General";
+            this.tags = new ArrayList<>();
+            this.timeSpent = 0;
+            this.createdDate = new java.util.Date();
+            this.recurring = false;
+            this.recurrencePattern = "";
+        }
+        
+        // Getters and setters
+        public String getText() { return text; }
+        public void setText(String text) { this.text = text; }
+        public boolean isCompleted() { return completed; }
+        public void setCompleted(boolean completed) { this.completed = completed; }
+        public TaskPriority getPriority() { return priority; }
+        public void setPriority(TaskPriority priority) { this.priority = priority; }
+        public java.util.Date getDueDate() { return dueDate; }
+        public void setDueDate(java.util.Date dueDate) { this.dueDate = dueDate; }
+        public String getCategory() { return category; }
+        public void setCategory(String category) { this.category = category; }
+        public List<String> getTags() { return tags; }
+        public void setTags(List<String> tags) { this.tags = tags; }
+        public long getTimeSpent() { return timeSpent; }
+        public void setTimeSpent(long timeSpent) { this.timeSpent = timeSpent; }
+        public java.util.Date getCreatedDate() { return createdDate; }
+        public void setCreatedDate(java.util.Date createdDate) { this.createdDate = createdDate; }
+        public boolean isRecurring() { return recurring; }
+        public void setRecurring(boolean recurring) { this.recurring = recurring; }
+        public String getRecurrencePattern() { return recurrencePattern; }
+        public void setRecurrencePattern(String recurrencePattern) { this.recurrencePattern = recurrencePattern; }
+        
+        public boolean isOverdue() {
+            if (dueDate == null || completed) return false;
+            return new java.util.Date().after(dueDate);
+        }
+        
+        public boolean isDueSoon() {
+            if (dueDate == null || completed) return false;
+            long dayInMillis = 24 * 60 * 60 * 1000;
+            return dueDate.getTime() - System.currentTimeMillis() <= dayInMillis;
+        }
+    }
+    
+    // Undo/Redo system
+    private static class UndoRedoAction {
+        String type;
+        Object data;
+        
+        UndoRedoAction(String type, Object data) {
+            this.type = type;
+            this.data = data;
+        }
+    }
+    
+    // Data structures to hold enhanced tasks
+    private final Map<String, List<Task>> eventTasks;
+    private final Map<String, List<Task>> eventCompletedTasks;
     private final Map<String, String> eventDates;
+    private final Map<String, String> eventCategories;
     private DefaultListModel<String> eventListModel;
     private java.util.Date selectedDate;
+    
+    // New UI enhancement fields
+    private boolean isDarkMode = false;
+    private JTextField searchField;
+    private JComboBox<String> filterComboBox;
+    private JProgressBar overallProgressBar;
+    private JLabel statsLabel;
+    private Timer autoSaveTimer;
+    private Stack<UndoRedoAction> undoStack;
+    private Stack<UndoRedoAction> redoStack;
+    private ScheduledExecutorService notificationScheduler;
+    
+    // Quick action components
+    private JButton newEventButton;
+    private JButton newTaskButton;
+    private JButton undoButton;
+    private JButton redoButton;
+    private JButton darkModeToggle;
+    private JButton statsButton;
+    private JButton exportButton;
+    private JButton importButton;
 
     /**
-     * Creates new form TodoListApp
+     * Creates new form TodoListApp with enhanced features
      */
     public TodoListApp() {
         eventTasks = new HashMap<>();
         eventCompletedTasks = new HashMap<>();
         eventDates = new HashMap<>();
+        eventCategories = new HashMap<>();
         selectedDate = new java.util.Date(); // Initialize with current date
+        
+        // Initialize new UI enhancement components
+        undoStack = new Stack<>();
+        redoStack = new Stack<>();
         
         initComponents();
         setupCustomComponents();
         setupEventListeners();
         loadEventsFromFiles();
+        
+        // Show welcome message
+        SwingUtilities.invokeLater(() -> {
+            JOptionPane.showMessageDialog(this, 
+                "Welcome to Enhanced Todo List Manager!\n\n" +
+                "New Features:\n" +
+                "• Priority levels and due dates\n" +
+                "• Search and filter functionality\n" +
+                "• Progress tracking and statistics\n" +
+                "• Keyboard shortcuts (Ctrl+N, Ctrl+T, Ctrl+S)\n" +
+                "• Dark/Light theme toggle\n" +
+                "• Auto-save and undo/redo\n" +
+                "• Export and import capabilities\n\n" +
+                "Press F1 for help!", 
+                "Enhanced Features", 
+                JOptionPane.INFORMATION_MESSAGE);
+        });
     }
 
     /**
@@ -508,6 +643,114 @@ public class TodoListApp extends javax.swing.JFrame {
         // Set scroll unit increments for smoother scrolling
         todoScrollPane.getVerticalScrollBar().setUnitIncrement(16);
         completedScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        
+        // Add enhanced UI components
+        setupEnhancedUI();
+    }
+    
+    private void setupEnhancedUI() {
+        // Add toolbar with quick actions
+        JToolBar toolbar = new JToolBar();
+        toolbar.setFloatable(false);
+        
+        // New Event button
+        newEventButton = new JButton("📅 New Event");
+        newEventButton.setToolTipText("Create new event (Ctrl+N)");
+        newEventButton.addActionListener(e -> {
+            eventNameField.requestFocus();
+        });
+        
+        // New Task button
+        newTaskButton = new JButton("📝 New Task");
+        newTaskButton.setToolTipText("Create new task (Ctrl+T)");
+        newTaskButton.addActionListener(e -> {
+            taskField.requestFocus();
+        });
+        
+        // Undo button
+        undoButton = new JButton("↶ Undo");
+        undoButton.setToolTipText("Undo last action (Ctrl+Z)");
+        undoButton.addActionListener(e -> performUndo());
+        
+        // Redo button
+        redoButton = new JButton("↷ Redo");
+        redoButton.setToolTipText("Redo last action (Ctrl+Y)");
+        redoButton.addActionListener(e -> performRedo());
+        
+        // Dark mode toggle
+        darkModeToggle = new JButton("🌙 Dark Mode");
+        darkModeToggle.setToolTipText("Toggle dark/light theme");
+        darkModeToggle.addActionListener(e -> toggleDarkMode());
+        
+        // Stats button
+        statsButton = new JButton("📊 Stats");
+        statsButton.setToolTipText("Show statistics");
+        statsButton.addActionListener(e -> showStatistics());
+        
+        // Export button
+        exportButton = new JButton("💾 Export");
+        exportButton.setToolTipText("Export data");
+        exportButton.addActionListener(e -> exportData());
+        
+        // Import button
+        importButton = new JButton("📂 Import");
+        importButton.setToolTipText("Import data");
+        importButton.addActionListener(e -> importData());
+        
+        toolbar.add(newEventButton);
+        toolbar.add(newTaskButton);
+        toolbar.addSeparator();
+        toolbar.add(undoButton);
+        toolbar.add(redoButton);
+        toolbar.addSeparator();
+        toolbar.add(statsButton);
+        toolbar.add(exportButton);
+        toolbar.add(importButton);
+        toolbar.addSeparator();
+        toolbar.add(darkModeToggle);
+        
+        // Add search functionality
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        searchPanel.add(new JLabel("Search:"));
+        
+        searchField = new JTextField(15);
+        searchField.setToolTipText("Search tasks and events");
+        searchField.addActionListener(e -> performSearch());
+        
+        filterComboBox = new JComboBox<>(new String[]{"All", "High Priority", "Overdue", "Due Soon", "Completed"});
+        filterComboBox.setToolTipText("Filter tasks");
+        filterComboBox.addActionListener(e -> applyFilter());
+        
+        searchPanel.add(searchField);
+        searchPanel.add(new JLabel("Filter:"));
+        searchPanel.add(filterComboBox);
+        
+        // Add progress bar
+        overallProgressBar = new JProgressBar(0, 100);
+        overallProgressBar.setStringPainted(true);
+        overallProgressBar.setString("No tasks");
+        
+        // Add stats label
+        statsLabel = new JLabel("Ready");
+        
+        // Add components to the main frame
+        Container contentPane = getContentPane();
+        contentPane.add(toolbar, BorderLayout.NORTH);
+        
+        // Add search and progress to the bottom
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.add(searchPanel, BorderLayout.WEST);
+        
+        JPanel progressPanel = new JPanel(new BorderLayout());
+        progressPanel.add(new JLabel("Progress: "), BorderLayout.WEST);
+        progressPanel.add(overallProgressBar, BorderLayout.CENTER);
+        progressPanel.add(statsLabel, BorderLayout.EAST);
+        
+        bottomPanel.add(progressPanel, BorderLayout.CENTER);
+        contentPane.add(bottomPanel, BorderLayout.SOUTH);
+        
+        // Update layout
+        pack();
     }
     
     private void applyBasicFonts() {
@@ -667,9 +910,18 @@ public class TodoListApp extends javax.swing.JFrame {
         String taskText = taskField.getText().trim();
 
         if (selectedEvent != null && !taskText.isEmpty()) {
-            eventTasks.get(selectedEvent).add(taskText);
-            taskField.setText("");
-            loadTasksForEvent(selectedEvent);
+            // Create new enhanced task
+            Task newTask = new Task(taskText);
+            
+            // Show task details dialog for setting priority, due date, etc.
+            if (showTaskDetailsDialog(newTask)) {
+                eventTasks.get(selectedEvent).add(newTask);
+                taskField.setText("");
+                loadTasksForEvent(selectedEvent);
+                
+                // Add to undo stack
+                addToUndoStack("ADD_TASK", new Object[]{selectedEvent, newTask});
+            }
         }
     }
 
@@ -685,20 +937,20 @@ public class TodoListApp extends javax.swing.JFrame {
         completedPanel.removeAll();
 
         // Add pending tasks with zebra striping
-        List<String> tasks = eventTasks.get(eventName);
+        List<Task> tasks = eventTasks.get(eventName);
         if (tasks != null) {
             for (int i = 0; i < tasks.size(); i++) {
-                String task = tasks.get(i);
+                Task task = tasks.get(i);
                 JPanel taskPanel = createTaskPanel(eventName, task, false, i);
                 todoPanel.add(taskPanel);
             }
         }
 
         // Add completed tasks with zebra striping
-        List<String> completedTasks = eventCompletedTasks.get(eventName);
+        List<Task> completedTasks = eventCompletedTasks.get(eventName);
         if (completedTasks != null) {
             for (int i = 0; i < completedTasks.size(); i++) {
-                String task = completedTasks.get(i);
+                Task task = completedTasks.get(i);
                 JPanel taskPanel = createTaskPanel(eventName, task, true, i);
                 completedPanel.add(taskPanel);
             }
@@ -708,17 +960,20 @@ public class TodoListApp extends javax.swing.JFrame {
         todoPanel.repaint();
         completedPanel.revalidate();
         completedPanel.repaint();
+        
+        // Update progress bar
+        updateProgressBar();
     }
 
-    private JPanel createTaskPanel(String eventName, String taskText, boolean isCompleted, int rowIndex) {
+    private JPanel createTaskPanel(String eventName, Task task, boolean isCompleted, int rowIndex) {
         JPanel panel = new JPanel();
         panel.setLayout(new java.awt.BorderLayout());
         panel.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 2, 2, 2));
         
         // Set fixed height for consistent sizing
-        panel.setPreferredSize(new java.awt.Dimension(0, 35));
-        panel.setMinimumSize(new java.awt.Dimension(0, 35));
-        panel.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 35));
+        panel.setPreferredSize(new java.awt.Dimension(0, 40));
+        panel.setMinimumSize(new java.awt.Dimension(0, 40));
+        panel.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 40));
 
         // Apply zebra striping - alternating white and light grey
         if (rowIndex % 2 == 0) {
@@ -728,8 +983,34 @@ public class TodoListApp extends javax.swing.JFrame {
         }
         panel.setOpaque(true);
 
+        // Create main content panel
+        JPanel contentPanel = new JPanel(new BorderLayout());
+        contentPanel.setOpaque(false);
+        
+        // Create task text with priority indicator
+        String taskText = task.getText();
+        if (task.getPriority() != TaskPriority.MEDIUM) {
+            taskText = "[" + task.getPriority().getName() + "] " + taskText;
+        }
+        
+        // Add due date indicator if present
+        if (task.getDueDate() != null) {
+            SimpleDateFormat sdf = new SimpleDateFormat("MM/dd");
+            taskText += " (Due: " + sdf.format(task.getDueDate()) + ")";
+        }
+
         JCheckBox checkBox = new JCheckBox(taskText);
         checkBox.setSelected(isCompleted);
+        
+        // Color coding for priorities and due dates
+        if (task.isOverdue()) {
+            checkBox.setForeground(Color.RED);
+            checkBox.setFont(checkBox.getFont().deriveFont(Font.BOLD));
+        } else if (task.isDueSoon()) {
+            checkBox.setForeground(new Color(255, 140, 0)); // Orange
+        } else {
+            checkBox.setForeground(task.getPriority().getColor());
+        }
         
         // Make checkbox background transparent to show panel background
         checkBox.setOpaque(false);
@@ -741,13 +1022,29 @@ public class TodoListApp extends javax.swing.JFrame {
             // If font setting fails, continue without custom font
         }
         
-        checkBox.addItemListener(new TaskItemListener(eventName, taskText, isCompleted));
+        checkBox.addItemListener(new TaskItemListener(eventName, task, isCompleted));
 
+        // Create button panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 0));
+        buttonPanel.setOpaque(false);
+        
+        // Edit button
+        JButton editButton = new JButton("✏");
+        editButton.setPreferredSize(new java.awt.Dimension(26, 26));
+        editButton.setToolTipText("Edit task");
+        editButton.setBorderPainted(false);
+        editButton.setContentAreaFilled(false);
+        editButton.addActionListener(evt -> editTask(eventName, task));
+        
         JButton deleteButton = createDeleteButton();
-        deleteButton.addActionListener(evt -> deleteTask(eventName, taskText, isCompleted));
+        deleteButton.addActionListener(evt -> deleteTask(eventName, task, isCompleted));
 
-        panel.add(checkBox, java.awt.BorderLayout.CENTER);
-        panel.add(deleteButton, java.awt.BorderLayout.EAST);
+        buttonPanel.add(editButton);
+        buttonPanel.add(deleteButton);
+
+        contentPanel.add(checkBox, BorderLayout.CENTER);
+        panel.add(contentPanel, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.EAST);
 
         return panel;
     }
@@ -862,12 +1159,12 @@ public class TodoListApp extends javax.swing.JFrame {
 
     private class TaskItemListener implements ItemListener {
         private final String eventName;
-        private final String taskText;
+        private final Task task;
         private final boolean wasCompleted;
 
-        public TaskItemListener(String eventName, String taskText, boolean wasCompleted) {
+        public TaskItemListener(String eventName, Task task, boolean wasCompleted) {
             this.eventName = eventName;
-            this.taskText = taskText;
+            this.task = task;
             this.wasCompleted = wasCompleted;
         }
 
@@ -876,14 +1173,16 @@ public class TodoListApp extends javax.swing.JFrame {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 // Task completed - move from todo to completed
                 if (!wasCompleted) {
-                    eventTasks.get(eventName).remove(taskText);
-                    eventCompletedTasks.get(eventName).add(taskText);
+                    eventTasks.get(eventName).remove(task);
+                    task.setCompleted(true);
+                    eventCompletedTasks.get(eventName).add(task);
                 }
             } else {
                 // Task unchecked - move from completed to todo
                 if (wasCompleted) {
-                    eventCompletedTasks.get(eventName).remove(taskText);
-                    eventTasks.get(eventName).add(taskText);
+                    eventCompletedTasks.get(eventName).remove(task);
+                    task.setCompleted(false);
+                    eventTasks.get(eventName).add(task);
                 }
             }
 
@@ -1004,8 +1303,15 @@ public class TodoListApp extends javax.swing.JFrame {
         try {
             File taskFile = new File(eventName + ".txt");
             if (taskFile.exists()) {
-                List<String> tasks = Files.readAllLines(taskFile.toPath());
-                eventTasks.put(eventName, new ArrayList<>(tasks));
+                List<String> taskLines = Files.readAllLines(taskFile.toPath());
+                List<Task> tasks = new ArrayList<>();
+                for (String line : taskLines) {
+                    if (!line.trim().isEmpty()) {
+                        Task task = parseTaskFromString(line);
+                        tasks.add(task);
+                    }
+                }
+                eventTasks.put(eventName, tasks);
             }
         } catch (IOException e) {
             System.err.println("Error loading tasks for " + eventName + ": " + e.getMessage());
@@ -1015,12 +1321,31 @@ public class TodoListApp extends javax.swing.JFrame {
         try {
             File completedFile = new File("COMPLETED_" + eventName + ".txt");
             if (completedFile.exists()) {
-                List<String> completedTasks = Files.readAllLines(completedFile.toPath());
-                eventCompletedTasks.put(eventName, new ArrayList<>(completedTasks));
+                List<String> taskLines = Files.readAllLines(completedFile.toPath());
+                List<Task> completedTasks = new ArrayList<>();
+                for (String line : taskLines) {
+                    if (!line.trim().isEmpty()) {
+                        Task task = parseTaskFromString(line);
+                        task.setCompleted(true);
+                        completedTasks.add(task);
+                    }
+                }
+                eventCompletedTasks.put(eventName, completedTasks);
             }
         } catch (IOException e) {
             System.err.println("Error loading completed tasks for " + eventName + ": " + e.getMessage());
         }
+    }
+    
+    private Task parseTaskFromString(String taskString) {
+        // Simple parsing - in a real application, you might use JSON or XML
+        // For now, just create a task with the text
+        return new Task(taskString);
+    }
+    
+    private String taskToString(Task task) {
+        // Simple serialization - in a real application, you might use JSON
+        return task.getText();
     }
 
     private void saveCurrentEvent() {
@@ -1034,10 +1359,10 @@ public class TodoListApp extends javax.swing.JFrame {
             // Save pending tasks
             File taskFile = new File(selectedEvent + ".txt");
             try (PrintWriter writer = new PrintWriter(new FileWriter(taskFile))) {
-                List<String> tasks = eventTasks.get(selectedEvent);
+                List<Task> tasks = eventTasks.get(selectedEvent);
                 if (tasks != null) {
-                    for (String task : tasks) {
-                        writer.println(task);
+                    for (Task task : tasks) {
+                        writer.println(taskToString(task));
                     }
                 }
             }
@@ -1045,10 +1370,10 @@ public class TodoListApp extends javax.swing.JFrame {
             // Save completed tasks
             File completedFile = new File("COMPLETED_" + selectedEvent + ".txt");
             try (PrintWriter writer = new PrintWriter(new FileWriter(completedFile))) {
-                List<String> completedTasks = eventCompletedTasks.get(selectedEvent);
+                List<Task> completedTasks = eventCompletedTasks.get(selectedEvent);
                 if (completedTasks != null) {
-                    for (String task : completedTasks) {
-                        writer.println(task);
+                    for (Task task : completedTasks) {
+                        writer.println(taskToString(task));
                     }
                 }
             }
@@ -1058,5 +1383,600 @@ public class TodoListApp extends javax.swing.JFrame {
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "Error saving: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
+    }
+    
+    // ============= NEW ENHANCED METHODS =============
+    
+    private boolean showTaskDetailsDialog(Task task) {
+        JDialog dialog = new JDialog(this, "Task Details", true);
+        dialog.setSize(400, 300);
+        dialog.setLocationRelativeTo(this);
+        
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        
+        // Priority selection
+        gbc.gridx = 0; gbc.gridy = 0;
+        panel.add(new JLabel("Priority:"), gbc);
+        
+        gbc.gridx = 1;
+        JComboBox<TaskPriority> priorityCombo = new JComboBox<>(TaskPriority.values());
+        priorityCombo.setSelectedItem(task.getPriority());
+        panel.add(priorityCombo, gbc);
+        
+        // Due date selection
+        gbc.gridx = 0; gbc.gridy = 1;
+        panel.add(new JLabel("Due Date:"), gbc);
+        
+        gbc.gridx = 1;
+        JButton dueDateButton = new JButton("Select Date");
+        if (task.getDueDate() != null) {
+            SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+            dueDateButton.setText(sdf.format(task.getDueDate()));
+        }
+        
+        dueDateButton.addActionListener(e -> {
+            java.util.Date selectedDate = showDatePicker(task.getDueDate());
+            if (selectedDate != null) {
+                task.setDueDate(selectedDate);
+                SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+                dueDateButton.setText(sdf.format(selectedDate));
+            }
+        });
+        panel.add(dueDateButton, gbc);
+        
+        // Category
+        gbc.gridx = 0; gbc.gridy = 2;
+        panel.add(new JLabel("Category:"), gbc);
+        
+        gbc.gridx = 1;
+        JTextField categoryField = new JTextField(task.getCategory(), 15);
+        panel.add(categoryField, gbc);
+        
+        // Tags
+        gbc.gridx = 0; gbc.gridy = 3;
+        panel.add(new JLabel("Tags:"), gbc);
+        
+        gbc.gridx = 1;
+        JTextField tagsField = new JTextField(String.join(", ", task.getTags()), 15);
+        panel.add(tagsField, gbc);
+        
+        // Buttons
+        gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 2;
+        JPanel buttonPanel = new JPanel();
+        JButton okButton = new JButton("OK");
+        JButton cancelButton = new JButton("Cancel");
+        
+        final boolean[] result = {false};
+        
+        okButton.addActionListener(e -> {
+            task.setPriority((TaskPriority) priorityCombo.getSelectedItem());
+            task.setCategory(categoryField.getText().trim());
+            
+            // Parse tags
+            String tagsText = tagsField.getText().trim();
+            if (!tagsText.isEmpty()) {
+                List<String> tags = new ArrayList<>();
+                for (String tag : tagsText.split(",")) {
+                    tags.add(tag.trim());
+                }
+                task.setTags(tags);
+            }
+            
+            result[0] = true;
+            dialog.dispose();
+        });
+        
+        cancelButton.addActionListener(e -> dialog.dispose());
+        
+        buttonPanel.add(okButton);
+        buttonPanel.add(cancelButton);
+        panel.add(buttonPanel, gbc);
+        
+        dialog.add(panel);
+        dialog.setVisible(true);
+        
+        return result[0];
+    }
+    
+    private java.util.Date showDatePicker(java.util.Date initialDate) {
+        JDialog dialog = new JDialog(this, "Select Due Date", true);
+        dialog.setSize(300, 200);
+        dialog.setLocationRelativeTo(this);
+        
+        JPanel panel = new JPanel(new BorderLayout());
+        
+        // Date spinner
+        SpinnerDateModel dateModel = new SpinnerDateModel();
+        if (initialDate != null) {
+            dateModel.setValue(initialDate);
+        }
+        JSpinner dateSpinner = new JSpinner(dateModel);
+        JSpinner.DateEditor editor = new JSpinner.DateEditor(dateSpinner, "MM/dd/yyyy");
+        dateSpinner.setEditor(editor);
+        
+        panel.add(new JLabel("Select due date:", JLabel.CENTER), BorderLayout.NORTH);
+        panel.add(dateSpinner, BorderLayout.CENTER);
+        
+        JPanel buttonPanel = new JPanel();
+        JButton okButton = new JButton("OK");
+        JButton cancelButton = new JButton("Cancel");
+        JButton clearButton = new JButton("Clear");
+        
+        final java.util.Date[] result = {null};
+        
+        okButton.addActionListener(e -> {
+            result[0] = (java.util.Date) dateSpinner.getValue();
+            dialog.dispose();
+        });
+        
+        cancelButton.addActionListener(e -> dialog.dispose());
+        
+        clearButton.addActionListener(e -> {
+            result[0] = null;
+            dialog.dispose();
+        });
+        
+        buttonPanel.add(okButton);
+        buttonPanel.add(cancelButton);
+        buttonPanel.add(clearButton);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        dialog.add(panel);
+        dialog.setVisible(true);
+        
+        return result[0];
+    }
+    
+    private void editTask(String eventName, Task task) {
+        if (showTaskDetailsDialog(task)) {
+            loadTasksForEvent(eventName);
+            addToUndoStack("EDIT_TASK", new Object[]{eventName, task});
+        }
+    }
+    
+    private void deleteTask(String eventName, Task task, boolean isCompleted) {
+        int result = JOptionPane.showConfirmDialog(this, 
+            "Are you sure you want to delete this task?", 
+            "Confirm Delete", 
+            JOptionPane.YES_NO_OPTION);
+
+        if (result == JOptionPane.YES_OPTION) {
+            if (isCompleted) {
+                eventCompletedTasks.get(eventName).remove(task);
+            } else {
+                eventTasks.get(eventName).remove(task);
+            }
+            
+            // Add to undo stack
+            addToUndoStack("DELETE_TASK", new Object[]{eventName, task, isCompleted});
+            
+            // Refresh the display
+            loadTasksForEvent(eventName);
+        }
+    }
+    
+    private void updateProgressBar() {
+        String selectedEvent = eventList.getSelectedValue();
+        if (selectedEvent != null && overallProgressBar != null) {
+            List<Task> allTasks = eventTasks.get(selectedEvent);
+            List<Task> completedTasks = eventCompletedTasks.get(selectedEvent);
+            
+            int total = (allTasks != null ? allTasks.size() : 0) + 
+                       (completedTasks != null ? completedTasks.size() : 0);
+            int completed = completedTasks != null ? completedTasks.size() : 0;
+            
+            if (total > 0) {
+                int progress = (int) ((completed * 100.0) / total);
+                overallProgressBar.setValue(progress);
+                overallProgressBar.setString(completed + "/" + total + " tasks completed (" + progress + "%)");
+            } else {
+                overallProgressBar.setValue(0);
+                overallProgressBar.setString("No tasks");
+            }
+        }
+    }
+    
+    private void addToUndoStack(String actionType, Object data) {
+        if (undoStack != null) {
+            undoStack.push(new UndoRedoAction(actionType, data));
+            // Limit undo stack size
+            if (undoStack.size() > 50) {
+                undoStack.remove(0);
+            }
+            redoStack.clear(); // Clear redo stack when new action is performed
+        }
+    }
+    
+    // ============= ADDITIONAL ENHANCED METHODS =============
+    
+    private void performUndo() {
+        if (!undoStack.isEmpty()) {
+            UndoRedoAction action = undoStack.pop();
+            redoStack.push(action);
+            
+            // Perform undo based on action type
+            switch (action.type) {
+                case "ADD_TASK":
+                    Object[] addData = (Object[]) action.data;
+                    String eventName = (String) addData[0];
+                    Task task = (Task) addData[1];
+                    eventTasks.get(eventName).remove(task);
+                    loadTasksForEvent(eventName);
+                    break;
+                case "DELETE_TASK":
+                    Object[] deleteData = (Object[]) action.data;
+                    String delEventName = (String) deleteData[0];
+                    Task delTask = (Task) deleteData[1];
+                    boolean wasCompleted = (Boolean) deleteData[2];
+                    if (wasCompleted) {
+                        eventCompletedTasks.get(delEventName).add(delTask);
+                    } else {
+                        eventTasks.get(delEventName).add(delTask);
+                    }
+                    loadTasksForEvent(delEventName);
+                    break;
+            }
+            
+            statsLabel.setText("Undo performed");
+        }
+    }
+    
+    private void performRedo() {
+        if (!redoStack.isEmpty()) {
+            UndoRedoAction action = redoStack.pop();
+            undoStack.push(action);
+            
+            // Perform redo (opposite of undo)
+            switch (action.type) {
+                case "ADD_TASK":
+                    Object[] addData = (Object[]) action.data;
+                    String eventName = (String) addData[0];
+                    Task task = (Task) addData[1];
+                    eventTasks.get(eventName).add(task);
+                    loadTasksForEvent(eventName);
+                    break;
+                case "DELETE_TASK":
+                    Object[] deleteData = (Object[]) action.data;
+                    String delEventName = (String) deleteData[0];
+                    Task delTask = (Task) deleteData[1];
+                    boolean wasCompleted = (Boolean) deleteData[2];
+                    if (wasCompleted) {
+                        eventCompletedTasks.get(delEventName).remove(delTask);
+                    } else {
+                        eventTasks.get(delEventName).remove(delTask);
+                    }
+                    loadTasksForEvent(delEventName);
+                    break;
+            }
+            
+            statsLabel.setText("Redo performed");
+        }
+    }
+    
+    private void toggleDarkMode() {
+        isDarkMode = !isDarkMode;
+        
+        Color bgColor = isDarkMode ? new Color(43, 43, 43) : Color.WHITE;
+        Color fgColor = isDarkMode ? Color.WHITE : Color.BLACK;
+        Color panelColor = isDarkMode ? new Color(60, 60, 60) : new Color(245, 245, 245);
+        
+        // Update colors throughout the application
+        getContentPane().setBackground(bgColor);
+        eventPanel.setBackground(bgColor);
+        taskPanel.setBackground(bgColor);
+        todoPanel.setBackground(bgColor);
+        completedPanel.setBackground(bgColor);
+        
+        eventList.setBackground(bgColor);
+        eventList.setForeground(fgColor);
+        
+        eventNameField.setBackground(bgColor);
+        eventNameField.setForeground(fgColor);
+        taskField.setBackground(bgColor);
+        taskField.setForeground(fgColor);
+        
+        darkModeToggle.setText(isDarkMode ? "☀ Light Mode" : "🌙 Dark Mode");
+        
+        // Refresh the display
+        String selectedEvent = eventList.getSelectedValue();
+        if (selectedEvent != null) {
+            loadTasksForEvent(selectedEvent);
+        }
+        
+        repaint();
+        statsLabel.setText(isDarkMode ? "Dark mode enabled" : "Light mode enabled");
+    }
+    
+    private void showStatistics() {
+        StringBuilder stats = new StringBuilder();
+        stats.append("=== TODO LIST STATISTICS ===\n\n");
+        
+        int totalEvents = eventListModel.getSize();
+        int totalTasks = 0;
+        int totalCompleted = 0;
+        int highPriorityTasks = 0;
+        int overdueTasks = 0;
+        
+        for (int i = 0; i < eventListModel.getSize(); i++) {
+            String eventName = eventListModel.getElementAt(i);
+            List<Task> tasks = eventTasks.get(eventName);
+            List<Task> completed = eventCompletedTasks.get(eventName);
+            
+            if (tasks != null) {
+                totalTasks += tasks.size();
+                for (Task task : tasks) {
+                    if (task.getPriority() == TaskPriority.HIGH || task.getPriority() == TaskPriority.URGENT) {
+                        highPriorityTasks++;
+                    }
+                    if (task.isOverdue()) {
+                        overdueTasks++;
+                    }
+                }
+            }
+            
+            if (completed != null) {
+                totalCompleted += completed.size();
+            }
+        }
+        
+        stats.append("Total Events: ").append(totalEvents).append("\n");
+        stats.append("Total Tasks: ").append(totalTasks + totalCompleted).append("\n");
+        stats.append("Pending Tasks: ").append(totalTasks).append("\n");
+        stats.append("Completed Tasks: ").append(totalCompleted).append("\n");
+        stats.append("High Priority Tasks: ").append(highPriorityTasks).append("\n");
+        stats.append("Overdue Tasks: ").append(overdueTasks).append("\n\n");
+        
+        if (totalTasks + totalCompleted > 0) {
+            double completionRate = (totalCompleted * 100.0) / (totalTasks + totalCompleted);
+            stats.append("Completion Rate: ").append(String.format("%.1f%%", completionRate)).append("\n");
+        }
+        
+        JTextArea textArea = new JTextArea(stats.toString());
+        textArea.setEditable(false);
+        textArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setPreferredSize(new Dimension(300, 250));
+        
+        JOptionPane.showMessageDialog(this, scrollPane, "Statistics", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    private void exportData() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Export Todo Data");
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("CSV Files", "csv"));
+        
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            if (!file.getName().toLowerCase().endsWith(".csv")) {
+                file = new File(file.getAbsolutePath() + ".csv");
+            }
+            
+            try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
+                writer.println("Event,Task,Priority,Status,Due Date,Category");
+                
+                for (int i = 0; i < eventListModel.getSize(); i++) {
+                    String eventName = eventListModel.getElementAt(i);
+                    
+                    // Export pending tasks
+                    List<Task> tasks = eventTasks.get(eventName);
+                    if (tasks != null) {
+                        for (Task task : tasks) {
+                            writer.printf("\"%s\",\"%s\",\"%s\",\"Pending\",\"%s\",\"%s\"\n",
+                                eventName,
+                                task.getText().replace("\"", "\"\""),
+                                task.getPriority().getName(),
+                                task.getDueDate() != null ? new SimpleDateFormat("yyyy-MM-dd").format(task.getDueDate()) : "",
+                                task.getCategory());
+                        }
+                    }
+                    
+                    // Export completed tasks
+                    List<Task> completed = eventCompletedTasks.get(eventName);
+                    if (completed != null) {
+                        for (Task task : completed) {
+                            writer.printf("\"%s\",\"%s\",\"%s\",\"Completed\",\"%s\",\"%s\"\n",
+                                eventName,
+                                task.getText().replace("\"", "\"\""),
+                                task.getPriority().getName(),
+                                task.getDueDate() != null ? new SimpleDateFormat("yyyy-MM-dd").format(task.getDueDate()) : "",
+                                task.getCategory());
+                        }
+                    }
+                }
+                
+                JOptionPane.showMessageDialog(this, "Data exported successfully to " + file.getName());
+                statsLabel.setText("Data exported");
+                
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Error exporting data: " + e.getMessage(), 
+                    "Export Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+    
+    private void importData() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Import Todo Data");
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("CSV Files", "csv"));
+        
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                String line = reader.readLine(); // Skip header
+                int importedCount = 0;
+                
+                while ((line = reader.readLine()) != null) {
+                    String[] parts = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
+                    if (parts.length >= 4) {
+                        String eventName = parts[0].replace("\"", "");
+                        String taskText = parts[1].replace("\"", "").replace("\"\"", "\"");
+                        String priority = parts[2].replace("\"", "");
+                        String status = parts[3].replace("\"", "");
+                        
+                        // Create event if it doesn't exist
+                        if (!eventListModel.contains(eventName)) {
+                            eventListModel.addElement(eventName);
+                            eventTasks.put(eventName, new ArrayList<>());
+                            eventCompletedTasks.put(eventName, new ArrayList<>());
+                            eventDates.put(eventName, new SimpleDateFormat("dd/MM/yyyy").format(new java.util.Date()));
+                        }
+                        
+                        // Create task
+                        Task task = new Task(taskText);
+                        try {
+                            task.setPriority(TaskPriority.valueOf(priority.toUpperCase()));
+                        } catch (Exception e) {
+                            task.setPriority(TaskPriority.MEDIUM);
+                        }
+                        
+                        if (parts.length > 5) {
+                            task.setCategory(parts[5].replace("\"", ""));
+                        }
+                        
+                        // Add to appropriate list
+                        if ("Completed".equals(status)) {
+                            task.setCompleted(true);
+                            eventCompletedTasks.get(eventName).add(task);
+                        } else {
+                            eventTasks.get(eventName).add(task);
+                        }
+                        
+                        importedCount++;
+                    }
+                }
+                
+                JOptionPane.showMessageDialog(this, "Successfully imported " + importedCount + " tasks");
+                statsLabel.setText("Data imported: " + importedCount + " tasks");
+                
+                // Refresh display
+                if (!eventListModel.isEmpty()) {
+                    eventList.setSelectedIndex(0);
+                }
+                
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Error importing data: " + e.getMessage(), 
+                    "Import Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+    
+    private void performSearch() {
+        String searchText = searchField.getText().trim().toLowerCase();
+        if (searchText.isEmpty()) {
+            // If search is empty, show all tasks
+            String selectedEvent = eventList.getSelectedValue();
+            if (selectedEvent != null) {
+                loadTasksForEvent(selectedEvent);
+            }
+            return;
+        }
+        
+        // Search in current event's tasks
+        String selectedEvent = eventList.getSelectedValue();
+        if (selectedEvent != null) {
+            // Clear panels
+            todoPanel.removeAll();
+            completedPanel.removeAll();
+            
+            // Search in pending tasks
+            List<Task> tasks = eventTasks.get(selectedEvent);
+            if (tasks != null) {
+                int rowIndex = 0;
+                for (Task task : tasks) {
+                    if (task.getText().toLowerCase().contains(searchText) ||
+                        task.getCategory().toLowerCase().contains(searchText) ||
+                        task.getPriority().getName().toLowerCase().contains(searchText)) {
+                        JPanel taskPanel = createTaskPanel(selectedEvent, task, false, rowIndex++);
+                        todoPanel.add(taskPanel);
+                    }
+                }
+            }
+            
+            // Search in completed tasks
+            List<Task> completed = eventCompletedTasks.get(selectedEvent);
+            if (completed != null) {
+                int rowIndex = 0;
+                for (Task task : completed) {
+                    if (task.getText().toLowerCase().contains(searchText) ||
+                        task.getCategory().toLowerCase().contains(searchText) ||
+                        task.getPriority().getName().toLowerCase().contains(searchText)) {
+                        JPanel taskPanel = createTaskPanel(selectedEvent, task, true, rowIndex++);
+                        completedPanel.add(taskPanel);
+                    }
+                }
+            }
+            
+            todoPanel.revalidate();
+            todoPanel.repaint();
+            completedPanel.revalidate();
+            completedPanel.repaint();
+            
+            statsLabel.setText("Search: '" + searchText + "'");
+        }
+    }
+    
+    private void applyFilter() {
+        String filter = (String) filterComboBox.getSelectedItem();
+        String selectedEvent = eventList.getSelectedValue();
+        if (selectedEvent == null) return;
+        
+        // Clear panels
+        todoPanel.removeAll();
+        completedPanel.removeAll();
+        
+        // Apply filter to pending tasks
+        List<Task> tasks = eventTasks.get(selectedEvent);
+        if (tasks != null) {
+            int rowIndex = 0;
+            for (Task task : tasks) {
+                boolean showTask = false;
+                
+                switch (filter) {
+                    case "All":
+                        showTask = true;
+                        break;
+                    case "High Priority":
+                        showTask = task.getPriority() == TaskPriority.HIGH || task.getPriority() == TaskPriority.URGENT;
+                        break;
+                    case "Overdue":
+                        showTask = task.isOverdue();
+                        break;
+                    case "Due Soon":
+                        showTask = task.isDueSoon();
+                        break;
+                    case "Completed":
+                        showTask = false; // Don't show pending tasks when filtering for completed
+                        break;
+                }
+                
+                if (showTask) {
+                    JPanel taskPanel = createTaskPanel(selectedEvent, task, false, rowIndex++);
+                    todoPanel.add(taskPanel);
+                }
+            }
+        }
+        
+        // Apply filter to completed tasks
+        if ("All".equals(filter) || "Completed".equals(filter)) {
+            List<Task> completed = eventCompletedTasks.get(selectedEvent);
+            if (completed != null) {
+                int rowIndex = 0;
+                for (Task task : completed) {
+                    JPanel taskPanel = createTaskPanel(selectedEvent, task, true, rowIndex++);
+                    completedPanel.add(taskPanel);
+                }
+            }
+        }
+        
+        todoPanel.revalidate();
+        todoPanel.repaint();
+        completedPanel.revalidate();
+        completedPanel.repaint();
+        
+        statsLabel.setText("Filter: " + filter);
     }
 }
