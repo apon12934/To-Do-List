@@ -173,11 +173,11 @@ taskText|priority|dueDate|completed
 
 ## 📄 License
 
-This project is developed for educational purposes as part of CSE206 coursework. Feel free to use and modify for learning purposes.
+This project is developed for educational purposes as part of university coursework. Feel free to use and modify for learning purposes.
 
 ## 🙏 Acknowledgments
 
-- **Course**: CSE206 - Object-Oriented Programming
+- **Course**: University Object-Oriented Programming Course
 - **IDE**: NetBeans for excellent Swing GUI development
 - **Icons**: Custom icons for enhanced user experience
 - **Design**: Modern UI/UX principles for better usability
@@ -189,6 +189,14 @@ If you encounter any issues or have questions:
 2. Create an issue on GitHub
 3. Review the code comments for implementation details
 
+## 👨‍💻 Developer
+
+**Al Amin Islam Apon**
+
+- 📘 **Facebook**: [apon.xox](https://facebook.com/apon.xox)
+- 💬 **WhatsApp**: [wa.me/8801927041100](https://wa.me/8801927041100)
+- 💻 **GitHub**: [apon12934](https://github.com/apon12934)
+
 ---
 
-**Made with ❤️ for CSE206 - Demonstrating advanced OOP concepts and modern GUI development**
+**Made with ❤️ for University OOP Course - Demonstrating advanced OOP concepts and modern GUI development**
