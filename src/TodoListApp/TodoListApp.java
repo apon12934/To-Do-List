@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 
 /**
  *
@@ -57,7 +59,7 @@ public class TodoListApp extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         eventNameField = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
-        eventDateField = new javax.swing.JTextField();
+        eventDateSpinner = new javax.swing.JSpinner(new javax.swing.SpinnerDateModel());
         addEventButton = new javax.swing.JButton();
         taskPanel = new javax.swing.JPanel();
         eventInfoPanel = new javax.swing.JPanel();
@@ -93,6 +95,11 @@ public class TodoListApp extends javax.swing.JFrame {
             }
         });
 
+        // Configure the date spinner
+        JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(eventDateSpinner, "yyyy-MM-dd");
+        eventDateSpinner.setEditor(dateEditor);
+        eventDateSpinner.setValue(new java.util.Date());
+
         javax.swing.GroupLayout eventPanelLayout = new javax.swing.GroupLayout(eventPanel);
         eventPanel.setLayout(eventPanelLayout);
         eventPanelLayout.setHorizontalGroup(
@@ -102,7 +109,7 @@ public class TodoListApp extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(eventPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(eventNameField)
-                    .addComponent(eventDateField)
+                    .addComponent(eventDateSpinner)
                     .addComponent(addEventButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(eventPanelLayout.createSequentialGroup()
                         .addGroup(eventPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -122,7 +129,7 @@ public class TodoListApp extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(eventDateField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(eventDateSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(addEventButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -306,7 +313,7 @@ public class TodoListApp extends javax.swing.JFrame {
     private javax.swing.JButton addTaskButton;
     private javax.swing.JPanel completedPanel;
     private javax.swing.JScrollPane completedScrollPane;
-    private javax.swing.JTextField eventDateField;
+    private javax.swing.JSpinner eventDateSpinner;
     private javax.swing.JPanel eventInfoPanel;
     private javax.swing.JList<String> eventList;
     private javax.swing.JTextField eventNameField;
@@ -382,7 +389,9 @@ public class TodoListApp extends javax.swing.JFrame {
 
     private void addEvent() {
         String eventName = eventNameField.getText().trim();
-        String eventDate = eventDateField.getText().trim();
+        java.util.Date selectedDate = (java.util.Date) eventDateSpinner.getValue();
+        java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        String eventDate = dateFormat.format(selectedDate);
 
         if (!eventName.isEmpty()) {
             if (!eventListModel.contains(eventName)) {
@@ -392,7 +401,7 @@ public class TodoListApp extends javax.swing.JFrame {
                 eventDates.put(eventName, eventDate);
 
                 eventNameField.setText("");
-                eventDateField.setText("");
+                eventDateSpinner.setValue(new java.util.Date()); // Reset to current date
             } else {
                 JOptionPane.showMessageDialog(this, "Event already exists!", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -509,7 +518,7 @@ public class TodoListApp extends javax.swing.JFrame {
         checkBox.addItemListener(new TaskItemListener(eventName, taskText, isCompleted));
 
         JButton deleteButton = createDeleteButton();
-        deleteButton.addActionListener(e -> deleteTask(eventName, taskText, isCompleted));
+        deleteButton.addActionListener(evt -> deleteTask(eventName, taskText, isCompleted));
 
         panel.add(checkBox, java.awt.BorderLayout.CENTER);
         panel.add(deleteButton, java.awt.BorderLayout.EAST);
