@@ -293,19 +293,27 @@ public class TodoListApp extends javax.swing.JFrame {
         String[] months = {"January", "February", "March", "April", "May", "June",
                           "July", "August", "September", "October", "November", "December"};
         JComboBox<String> monthCombo = new JComboBox<>(months);
+        monthCombo.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 16));
         
         SpinnerNumberModel yearModel = new SpinnerNumberModel(calendar.get(java.util.Calendar.YEAR), 1900, 2100, 1);
         JSpinner yearSpinner = new JSpinner(yearModel);
+        yearSpinner.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 16));
         
         // Remove comma from year display
         JSpinner.NumberEditor yearEditor = new JSpinner.NumberEditor(yearSpinner, "#");
+        yearEditor.getTextField().setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 16));
         yearSpinner.setEditor(yearEditor);
         
         monthCombo.setSelectedIndex(calendar.get(java.util.Calendar.MONTH));
         
-        topPanel.add(new JLabel("Month:"));
+        JLabel monthLabel = new JLabel("Month:");
+        JLabel yearLabel = new JLabel("Year:");
+        monthLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 16));
+        yearLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 16));
+        
+        topPanel.add(monthLabel);
         topPanel.add(monthCombo);
-        topPanel.add(new JLabel("Year:"));
+        topPanel.add(yearLabel);
         topPanel.add(yearSpinner);
         
         // Calendar grid
@@ -316,7 +324,7 @@ public class TodoListApp extends javax.swing.JFrame {
         String[] dayHeaders = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
         for (String day : dayHeaders) {
             JLabel label = new JLabel(day, SwingConstants.CENTER);
-            label.setFont(label.getFont().deriveFont(Font.BOLD));
+            label.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 16));
             calendarPanel.add(label);
         }
         
@@ -345,6 +353,7 @@ public class TodoListApp extends javax.swing.JFrame {
             // Add day buttons
             for (int day = 1; day <= daysInMonth; day++) {
                 JButton dayButton = new JButton(String.valueOf(day));
+                dayButton.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 16));
                 dayButton.setPreferredSize(new Dimension(40, 30));
                 
                 // Highlight selected date
@@ -388,6 +397,7 @@ public class TodoListApp extends javax.swing.JFrame {
         // Bottom panel with buttons
         JPanel bottomPanel = new JPanel(new FlowLayout());
         JButton todayButton = new JButton("Today");
+        todayButton.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 16));
         todayButton.addActionListener(e -> {
             selectedDate = new java.util.Date();
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
@@ -396,6 +406,7 @@ public class TodoListApp extends javax.swing.JFrame {
         });
         
         JButton cancelButton = new JButton("Cancel");
+        cancelButton.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 16));
         cancelButton.addActionListener(e -> calendarDialog.dispose());
         
         bottomPanel.add(todayButton);
@@ -481,7 +492,30 @@ public class TodoListApp extends javax.swing.JFrame {
         eventList.setCellRenderer(new EventListCellRenderer());
         
         // Set larger row height for better appearance
-        eventList.setFixedCellHeight(40);
+        eventList.setFixedCellHeight(45);
+        
+        // Increase font sizes throughout the application
+        Font baseFont = new Font(Font.SANS_SERIF, Font.PLAIN, 16);
+        Font labelFont = new Font(Font.SANS_SERIF, Font.PLAIN, 15);
+        Font titleFont = new Font(Font.SANS_SERIF, Font.BOLD, 17);
+        
+        // Set fonts for main components
+        eventNameField.setFont(baseFont);
+        taskField.setFont(baseFont);
+        eventList.setFont(baseFont);
+        
+        // Set fonts for labels
+        jLabel1.setFont(labelFont);
+        jLabel2.setFont(labelFont);
+        jLabel3.setFont(labelFont);
+        selectedEventTitle.setFont(titleFont);
+        selectedEventDate.setFont(labelFont);
+        
+        // Set fonts for buttons
+        eventDateButton.setFont(baseFont);
+        addEventButton.setFont(baseFont);
+        addTaskButton.setFont(baseFont);
+        saveButton.setFont(baseFont);
         
         // Configure scroll panes for better behavior
         todoScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -647,13 +681,14 @@ public class TodoListApp extends javax.swing.JFrame {
         panel.setLayout(new java.awt.BorderLayout());
         panel.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 2, 2, 2));
         
-        // Set fixed height for consistent sizing
-        panel.setPreferredSize(new java.awt.Dimension(0, 30));
-        panel.setMinimumSize(new java.awt.Dimension(0, 30));
-        panel.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 30));
+        // Set fixed height for consistent sizing (slightly bigger)
+        panel.setPreferredSize(new java.awt.Dimension(0, 40));
+        panel.setMinimumSize(new java.awt.Dimension(0, 40));
+        panel.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 40));
 
         JCheckBox checkBox = new JCheckBox(taskText);
         checkBox.setSelected(isCompleted);
+        checkBox.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 16)); // Bigger font for tasks
         checkBox.addItemListener(new TaskItemListener(eventName, taskText, isCompleted));
 
         JButton deleteButton = createDeleteButton();
@@ -674,20 +709,20 @@ public class TodoListApp extends javax.swing.JFrame {
             if (icon != null) {
                 deleteButton.setIcon(icon);
             } else {
-                // Fallback to Unicode trash icon
+                // Fallback to Unicode trash icon with bigger font
                 deleteButton.setText("🗑");
-                deleteButton.setFont(new java.awt.Font("Segoe UI Emoji", java.awt.Font.PLAIN, 12));
+                deleteButton.setFont(new java.awt.Font("Segoe UI Emoji", java.awt.Font.PLAIN, 16));
             }
         } catch (Exception e) {
-            // Fallback to Unicode trash icon
+            // Fallback to Unicode trash icon with bigger font
             deleteButton.setText("🗑");
-            deleteButton.setFont(new java.awt.Font("Segoe UI Emoji", java.awt.Font.PLAIN, 12));
+            deleteButton.setFont(new java.awt.Font("Segoe UI Emoji", java.awt.Font.PLAIN, 16));
         }
         
         // Set fixed size for consistency
-        deleteButton.setPreferredSize(new java.awt.Dimension(26, 26));
-        deleteButton.setMinimumSize(new java.awt.Dimension(26, 26));
-        deleteButton.setMaximumSize(new java.awt.Dimension(26, 26));
+        deleteButton.setPreferredSize(new java.awt.Dimension(30, 30));
+        deleteButton.setMinimumSize(new java.awt.Dimension(30, 30));
+        deleteButton.setMaximumSize(new java.awt.Dimension(30, 30));
         deleteButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
         deleteButton.setToolTipText("Delete task");
         deleteButton.setBorderPainted(false);
