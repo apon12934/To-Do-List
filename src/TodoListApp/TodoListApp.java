@@ -162,23 +162,6 @@ public class TodoListApp extends javax.swing.JFrame {
         setupCustomComponents();
         setupEventListeners();
         loadEventsFromFiles();
-        
-        // Show welcome message
-        SwingUtilities.invokeLater(() -> {
-            JOptionPane.showMessageDialog(this, 
-                "Welcome to Enhanced Todo List Manager!\n\n" +
-                "New Features:\n" +
-                "• Priority levels and due dates\n" +
-                "• Search and filter functionality\n" +
-                "• Progress tracking and statistics\n" +
-                "• Keyboard shortcuts (Ctrl+N, Ctrl+T, Ctrl+S)\n" +
-                "• Dark/Light theme toggle\n" +
-                "• Auto-save and undo/redo\n" +
-                "• Export and import capabilities\n\n" +
-                "Press F1 for help!", 
-                "Enhanced Features", 
-                JOptionPane.INFORMATION_MESSAGE);
-        });
     }
 
     /**
