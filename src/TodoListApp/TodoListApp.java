@@ -29,6 +29,7 @@ public class TodoListApp extends javax.swing.JFrame {
     private final Map<String, List<String>> eventCompletedTasks;
     private final Map<String, String> eventDates;
     private DefaultListModel<String> eventListModel;
+    private java.util.Date selectedDate;
 
     /**
      * Creates new form TodoListApp
@@ -37,6 +38,7 @@ public class TodoListApp extends javax.swing.JFrame {
         eventTasks = new HashMap<>();
         eventCompletedTasks = new HashMap<>();
         eventDates = new HashMap<>();
+        selectedDate = new java.util.Date(); // Initialize with current date
         
         initComponents();
         setupCustomComponents();
@@ -60,6 +62,7 @@ public class TodoListApp extends javax.swing.JFrame {
         eventNameField = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
         eventDateSpinner = new javax.swing.JSpinner(new javax.swing.SpinnerDateModel());
+        eventDateButton = new javax.swing.JButton();
         addEventButton = new javax.swing.JButton();
         taskPanel = new javax.swing.JPanel();
         eventInfoPanel = new javax.swing.JPanel();
@@ -95,10 +98,12 @@ public class TodoListApp extends javax.swing.JFrame {
             }
         });
 
-        // Configure the date spinner
-        JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(eventDateSpinner, "yyyy-MM-dd");
-        eventDateSpinner.setEditor(dateEditor);
-        eventDateSpinner.setValue(new java.util.Date());
+        // Configure the date button
+        eventDateButton.setText("Select Date");
+        eventDateButton.addActionListener(e -> openCalendarDialog());
+        
+        // Hide the spinner since we're using the button
+        eventDateSpinner.setVisible(false);
 
         javax.swing.GroupLayout eventPanelLayout = new javax.swing.GroupLayout(eventPanel);
         eventPanel.setLayout(eventPanelLayout);
@@ -109,7 +114,7 @@ public class TodoListApp extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(eventPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(eventNameField)
-                    .addComponent(eventDateSpinner)
+                    .addComponent(eventDateButton)
                     .addComponent(addEventButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(eventPanelLayout.createSequentialGroup()
                         .addGroup(eventPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -129,7 +134,7 @@ public class TodoListApp extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(eventDateSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(eventDateButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(addEventButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -273,6 +278,134 @@ public class TodoListApp extends javax.swing.JFrame {
         saveCurrentEvent();
     }//GEN-LAST:event_saveButtonActionPerformed
 
+    private void openCalendarDialog() {
+        // Create a custom calendar dialog
+        JDialog calendarDialog = new JDialog(this, "Select Date", true);
+        calendarDialog.setSize(350, 400);
+        calendarDialog.setLocationRelativeTo(this);
+        
+        // Create calendar components
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+        calendar.setTime(selectedDate);
+        
+        // Month and Year selection
+        JPanel topPanel = new JPanel(new FlowLayout());
+        String[] months = {"January", "February", "March", "April", "May", "June",
+                          "July", "August", "September", "October", "November", "December"};
+        JComboBox<String> monthCombo = new JComboBox<>(months);
+        
+        SpinnerNumberModel yearModel = new SpinnerNumberModel(calendar.get(java.util.Calendar.YEAR), 1900, 2100, 1);
+        JSpinner yearSpinner = new JSpinner(yearModel);
+        
+        monthCombo.setSelectedIndex(calendar.get(java.util.Calendar.MONTH));
+        
+        topPanel.add(new JLabel("Month:"));
+        topPanel.add(monthCombo);
+        topPanel.add(new JLabel("Year:"));
+        topPanel.add(yearSpinner);
+        
+        // Calendar grid
+        JPanel calendarPanel = new JPanel(new GridLayout(7, 7, 2, 2));
+        calendarPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        // Day headers
+        String[] dayHeaders = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+        for (String day : dayHeaders) {
+            JLabel label = new JLabel(day, SwingConstants.CENTER);
+            label.setFont(label.getFont().deriveFont(Font.BOLD));
+            calendarPanel.add(label);
+        }
+        
+        // Function to update calendar
+        Runnable updateCalendar = () -> {
+            // Remove existing day components (keep headers)
+            Component[] components = calendarPanel.getComponents();
+            for (int i = 7; i < components.length; i++) {
+                calendarPanel.remove(components[i]);
+            }
+            
+            int month = monthCombo.getSelectedIndex();
+            int year = (Integer) yearSpinner.getValue();
+            
+            java.util.Calendar cal = java.util.Calendar.getInstance();
+            cal.set(year, month, 1);
+            
+            int startDay = cal.get(java.util.Calendar.DAY_OF_WEEK) - 1;
+            int daysInMonth = cal.getActualMaximum(java.util.Calendar.DAY_OF_MONTH);
+            
+            // Add empty cells for days before month starts
+            for (int i = 0; i < startDay; i++) {
+                calendarPanel.add(new JLabel(""));
+            }
+            
+            // Add day buttons
+            for (int day = 1; day <= daysInMonth; day++) {
+                JButton dayButton = new JButton(String.valueOf(day));
+                dayButton.setPreferredSize(new Dimension(40, 30));
+                
+                // Highlight selected date
+                java.util.Calendar selectedCal = java.util.Calendar.getInstance();
+                selectedCal.setTime(selectedDate);
+                if (selectedCal.get(java.util.Calendar.YEAR) == year &&
+                    selectedCal.get(java.util.Calendar.MONTH) == month &&
+                    selectedCal.get(java.util.Calendar.DAY_OF_MONTH) == day) {
+                    dayButton.setBackground(Color.BLUE);
+                    dayButton.setForeground(Color.WHITE);
+                    dayButton.setOpaque(true);
+                }
+                
+                final int selectedDay = day;
+                dayButton.addActionListener(e -> {
+                    java.util.Calendar newDate = java.util.Calendar.getInstance();
+                    newDate.set(year, month, selectedDay);
+                    selectedDate = newDate.getTime();
+                    
+                    // Update button text to show selected date
+                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+                    eventDateButton.setText(sdf.format(selectedDate));
+                    
+                    calendarDialog.dispose();
+                });
+                
+                calendarPanel.add(dayButton);
+            }
+            
+            calendarPanel.revalidate();
+            calendarPanel.repaint();
+        };
+        
+        // Add listeners for month/year changes
+        monthCombo.addActionListener(e -> updateCalendar.run());
+        yearSpinner.addChangeListener(e -> updateCalendar.run());
+        
+        // Initial calendar setup
+        updateCalendar.run();
+        
+        // Bottom panel with buttons
+        JPanel bottomPanel = new JPanel(new FlowLayout());
+        JButton todayButton = new JButton("Today");
+        todayButton.addActionListener(e -> {
+            selectedDate = new java.util.Date();
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+            eventDateButton.setText(sdf.format(selectedDate));
+            calendarDialog.dispose();
+        });
+        
+        JButton cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(e -> calendarDialog.dispose());
+        
+        bottomPanel.add(todayButton);
+        bottomPanel.add(cancelButton);
+        
+        // Layout dialog
+        calendarDialog.setLayout(new BorderLayout());
+        calendarDialog.add(topPanel, BorderLayout.NORTH);
+        calendarDialog.add(calendarPanel, BorderLayout.CENTER);
+        calendarDialog.add(bottomPanel, BorderLayout.SOUTH);
+        
+        calendarDialog.setVisible(true);
+    }
+
     /**
      * @param args the command line arguments
      */
@@ -313,6 +446,7 @@ public class TodoListApp extends javax.swing.JFrame {
     private javax.swing.JButton addTaskButton;
     private javax.swing.JPanel completedPanel;
     private javax.swing.JScrollPane completedScrollPane;
+    private javax.swing.JButton eventDateButton;
     private javax.swing.JSpinner eventDateSpinner;
     private javax.swing.JPanel eventInfoPanel;
     private javax.swing.JList<String> eventList;
@@ -389,7 +523,6 @@ public class TodoListApp extends javax.swing.JFrame {
 
     private void addEvent() {
         String eventName = eventNameField.getText().trim();
-        java.util.Date selectedDate = (java.util.Date) eventDateSpinner.getValue();
         java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd");
         String eventDate = dateFormat.format(selectedDate);
 
@@ -401,7 +534,9 @@ public class TodoListApp extends javax.swing.JFrame {
                 eventDates.put(eventName, eventDate);
 
                 eventNameField.setText("");
-                eventDateSpinner.setValue(new java.util.Date()); // Reset to current date
+                // Reset date button text to default
+                eventDateButton.setText("Select Date");
+                selectedDate = new java.util.Date(); // Reset to current date
             } else {
                 JOptionPane.showMessageDialog(this, "Event already exists!", "Error", JOptionPane.ERROR_MESSAGE);
             }
