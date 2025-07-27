@@ -9,6 +9,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.*;
 import java.nio.file.Files;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -141,6 +142,8 @@ public class TodoListApp extends javax.swing.JFrame {
     private JButton undoButton;
     private JButton redoButton;
     private JButton darkModeToggle;
+    private ImageIcon darkModeIcon;
+    private ImageIcon lightModeIcon;
     private JButton statsButton;
     private JButton exportButton;
     private JButton importButton;
@@ -395,16 +398,9 @@ public class TodoListApp extends javax.swing.JFrame {
 
         jSplitPane1.setRightComponent(taskPanel);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 800, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1)
-        );
+        // Use BorderLayout to accommodate toolbar
+        getContentPane().setLayout(new BorderLayout());
+        getContentPane().add(jSplitPane1, BorderLayout.CENTER);
 
         pack();
         setLocationRelativeTo(null);
@@ -690,9 +686,22 @@ public class TodoListApp extends javax.swing.JFrame {
         redoButton.setToolTipText("Redo last action (Ctrl+Y)");
         redoButton.addActionListener(e -> performRedo());
         
-        // Dark mode toggle
-        darkModeToggle = new JButton("🌙 Dark Mode");
-        darkModeToggle.setToolTipText("Toggle dark/light theme");
+        // Dark mode toggle with images
+        try {
+            darkModeIcon = new ImageIcon(getClass().getClassLoader().getResource("images/switch-dark-mode.png"));
+            lightModeIcon = new ImageIcon(getClass().getClassLoader().getResource("images/switch-light-mode.png"));
+            
+            darkModeToggle = new JButton(isDarkMode ? lightModeIcon : darkModeIcon);
+            darkModeToggle.setToolTipText("Toggle dark/light theme");
+            darkModeToggle.setPreferredSize(new Dimension(32, 32));
+            darkModeToggle.setBorderPainted(false);
+            darkModeToggle.setContentAreaFilled(false);
+            darkModeToggle.setFocusPainted(false);
+        } catch (Exception e) {
+            // Fallback to text if images not found
+            darkModeToggle = new JButton("🌙 Dark Mode");
+            darkModeToggle.setToolTipText("Toggle dark/light theme");
+        }
         darkModeToggle.addActionListener(e -> toggleDarkMode());
         
         // Stats button
@@ -991,11 +1000,20 @@ public class TodoListApp extends javax.swing.JFrame {
         panel.setMinimumSize(new java.awt.Dimension(0, 40));
         panel.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 40));
 
-        // Apply zebra striping - alternating white and light grey
-        if (rowIndex % 2 == 0) {
-            panel.setBackground(Color.WHITE);
+        // Apply zebra striping with dark mode support
+        Color lightColor, darkColor;
+        if (isDarkMode) {
+            lightColor = new Color(60, 60, 60);      // Dark grey
+            darkColor = new Color(45, 45, 45);       // Darker grey
         } else {
-            panel.setBackground(new Color(245, 245, 245)); // Light grey
+            lightColor = Color.WHITE;                 // White
+            darkColor = new Color(245, 245, 245);    // Light grey
+        }
+        
+        if (rowIndex % 2 == 0) {
+            panel.setBackground(lightColor);
+        } else {
+            panel.setBackground(darkColor);
         }
         panel.setOpaque(true);
 
@@ -1018,14 +1036,38 @@ public class TodoListApp extends javax.swing.JFrame {
         JCheckBox checkBox = new JCheckBox(taskText);
         checkBox.setSelected(isCompleted);
         
-        // Color coding for priorities and due dates
+        // Apply dark mode styling to checkbox
+        if (isDarkMode) {
+            checkBox.setForeground(Color.WHITE);
+            checkBox.setBackground(panel.getBackground());
+        } else {
+            checkBox.setForeground(Color.BLACK);
+            checkBox.setBackground(panel.getBackground());
+        }
+        
+        // Color coding for priorities and due dates (override dark mode for important states)
         if (task.isOverdue()) {
-            checkBox.setForeground(Color.RED);
+            checkBox.setForeground(isDarkMode ? new Color(255, 120, 120) : Color.RED);
             checkBox.setFont(checkBox.getFont().deriveFont(Font.BOLD));
         } else if (task.isDueSoon()) {
-            checkBox.setForeground(new Color(255, 140, 0)); // Orange
+            checkBox.setForeground(isDarkMode ? new Color(255, 180, 100) : new Color(255, 140, 0)); // Orange
         } else {
-            checkBox.setForeground(task.getPriority().getColor());
+            // Use priority colors but adjust for dark mode if needed
+            Color priorityColor = task.getPriority().getColor();
+            if (isDarkMode) {
+                // Lighten priority colors for dark mode visibility
+                if (priorityColor.equals(TaskPriority.LOW.getColor())) {
+                    checkBox.setForeground(new Color(100, 200, 100)); // Lighter green
+                } else if (priorityColor.equals(TaskPriority.HIGH.getColor())) {
+                    checkBox.setForeground(new Color(255, 120, 120)); // Lighter red
+                } else if (priorityColor.equals(TaskPriority.URGENT.getColor())) {
+                    checkBox.setForeground(new Color(200, 120, 255)); // Lighter purple
+                } else {
+                    checkBox.setForeground(new Color(255, 180, 100)); // Lighter orange for medium
+                }
+            } else {
+                checkBox.setForeground(priorityColor);
+            }
         }
         
         // Make checkbox background transparent to show panel background
@@ -1938,27 +1980,15 @@ public class TodoListApp extends javax.swing.JFrame {
     
     private void toggleDarkMode() {
         isDarkMode = !isDarkMode;
+        applyTheme();
         
-        Color bgColor = isDarkMode ? new Color(43, 43, 43) : Color.WHITE;
-        Color fgColor = isDarkMode ? Color.WHITE : Color.BLACK;
-        Color panelColor = isDarkMode ? new Color(60, 60, 60) : new Color(245, 245, 245);
-        
-        // Update colors throughout the application
-        getContentPane().setBackground(bgColor);
-        eventPanel.setBackground(bgColor);
-        taskPanel.setBackground(bgColor);
-        todoPanel.setBackground(bgColor);
-        completedPanel.setBackground(bgColor);
-        
-        eventList.setBackground(bgColor);
-        eventList.setForeground(fgColor);
-        
-        eventNameField.setBackground(bgColor);
-        eventNameField.setForeground(fgColor);
-        taskField.setBackground(bgColor);
-        taskField.setForeground(fgColor);
-        
-        darkModeToggle.setText(isDarkMode ? "☀ Light Mode" : "🌙 Dark Mode");
+        // Update button icon
+        if (darkModeIcon != null && lightModeIcon != null) {
+            darkModeToggle.setIcon(isDarkMode ? lightModeIcon : darkModeIcon);
+        } else {
+            // Fallback to text if images not available
+            darkModeToggle.setText(isDarkMode ? "☀ Light Mode" : "🌙 Dark Mode");
+        }
         
         // Refresh the display
         String selectedEvent = eventList.getSelectedValue();
@@ -1968,6 +1998,138 @@ public class TodoListApp extends javax.swing.JFrame {
         
         repaint();
         statsLabel.setText(isDarkMode ? "Dark mode enabled" : "Light mode enabled");
+    }
+    
+    private void applyTheme() {
+        // Define color schemes
+        Color bgColor = isDarkMode ? new Color(43, 43, 43) : Color.WHITE;
+        Color fgColor = isDarkMode ? Color.WHITE : Color.BLACK;
+        Color panelBgColor = isDarkMode ? new Color(60, 60, 60) : new Color(245, 245, 245);
+        Color fieldBgColor = isDarkMode ? new Color(55, 55, 55) : Color.WHITE;
+        Color buttonBgColor = isDarkMode ? new Color(70, 70, 70) : new Color(240, 240, 240);
+        Color borderColor = isDarkMode ? new Color(100, 100, 100) : new Color(200, 200, 200);
+        Color selectedColor = isDarkMode ? new Color(80, 120, 160) : new Color(184, 207, 229);
+        
+        // Main panels
+        getContentPane().setBackground(bgColor);
+        eventPanel.setBackground(bgColor);
+        taskPanel.setBackground(bgColor);
+        eventInfoPanel.setBackground(bgColor);
+        taskControlsPanel.setBackground(bgColor);
+        
+        // Task display panels
+        todoPanel.setBackground(bgColor);
+        completedPanel.setBackground(bgColor);
+        todoScrollPane.setBackground(bgColor);
+        completedScrollPane.setBackground(bgColor);
+        todoScrollPane.getViewport().setBackground(bgColor);
+        completedScrollPane.getViewport().setBackground(bgColor);
+        
+        // Event list
+        eventList.setBackground(fieldBgColor);
+        eventList.setForeground(fgColor);
+        eventList.setSelectionBackground(selectedColor);
+        eventList.setSelectionForeground(isDarkMode ? Color.WHITE : Color.BLACK);
+        jScrollPane1.setBackground(bgColor);
+        jScrollPane1.getViewport().setBackground(fieldBgColor);
+        
+        // Input fields
+        eventNameField.setBackground(fieldBgColor);
+        eventNameField.setForeground(fgColor);
+        eventNameField.setCaretColor(fgColor);
+        taskField.setBackground(fieldBgColor);
+        taskField.setForeground(fgColor);
+        taskField.setCaretColor(fgColor);
+        
+        // Search field
+        if (searchField != null) {
+            searchField.setBackground(fieldBgColor);
+            searchField.setForeground(fgColor);
+            searchField.setCaretColor(fgColor);
+        }
+        
+        // Combo box
+        if (filterComboBox != null) {
+            filterComboBox.setBackground(fieldBgColor);
+            filterComboBox.setForeground(fgColor);
+        }
+        
+        // Progress bar
+        if (overallProgressBar != null) {
+            overallProgressBar.setBackground(panelBgColor);
+            overallProgressBar.setForeground(isDarkMode ? new Color(100, 200, 100) : new Color(0, 150, 0));
+        }
+        
+        // Buttons
+        addEventButton.setBackground(buttonBgColor);
+        addEventButton.setForeground(fgColor);
+        addTaskButton.setBackground(buttonBgColor);
+        addTaskButton.setForeground(fgColor);
+        saveButton.setBackground(buttonBgColor);
+        saveButton.setForeground(fgColor);
+        eventDateButton.setBackground(buttonBgColor);
+        eventDateButton.setForeground(fgColor);
+        
+        // Toolbar buttons
+        if (newEventButton != null) {
+            newEventButton.setBackground(buttonBgColor);
+            newEventButton.setForeground(fgColor);
+        }
+        if (newTaskButton != null) {
+            newTaskButton.setBackground(buttonBgColor);
+            newTaskButton.setForeground(fgColor);
+        }
+        if (undoButton != null) {
+            undoButton.setBackground(buttonBgColor);
+            undoButton.setForeground(fgColor);
+        }
+        if (redoButton != null) {
+            redoButton.setBackground(buttonBgColor);
+            redoButton.setForeground(fgColor);
+        }
+        if (statsButton != null) {
+            statsButton.setBackground(buttonBgColor);
+            statsButton.setForeground(fgColor);
+        }
+        if (exportButton != null) {
+            exportButton.setBackground(buttonBgColor);
+            exportButton.setForeground(fgColor);
+        }
+        if (importButton != null) {
+            importButton.setBackground(buttonBgColor);
+            importButton.setForeground(fgColor);
+        }
+        if (darkModeToggle != null) {
+            darkModeToggle.setBackground(buttonBgColor);
+            darkModeToggle.setForeground(fgColor);
+        }
+        
+        // Labels
+        selectedEventTitle.setForeground(fgColor);
+        selectedEventDate.setForeground(fgColor);
+        if (statsLabel != null) {
+            statsLabel.setForeground(fgColor);
+        }
+        
+        // Split panes
+        jSplitPane1.setBackground(bgColor);
+        jSplitPane2.setBackground(bgColor);
+        
+        // Scroll pane borders
+        todoScrollPane.setBorder(javax.swing.BorderFactory.createTitledBorder(
+            javax.swing.BorderFactory.createLineBorder(borderColor), 
+            "Todo List", 
+            javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, 
+            javax.swing.border.TitledBorder.DEFAULT_POSITION, 
+            null, 
+            fgColor));
+        completedScrollPane.setBorder(javax.swing.BorderFactory.createTitledBorder(
+            javax.swing.BorderFactory.createLineBorder(borderColor), 
+            "Completed List", 
+            javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, 
+            javax.swing.border.TitledBorder.DEFAULT_POSITION, 
+            null, 
+            fgColor));
     }
     
     private void showStatistics() {

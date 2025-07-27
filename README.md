@@ -100,7 +100,9 @@ JavaApplication1/
 │   │   └── TodoListApp.form      # NetBeans form file
 │   └── images/
 │       ├── edit.png              # Edit icon
-│       └── delete.png            # Delete icon
+│       ├── delete.png            # Delete icon
+│       ├── switch-dark-mode.png  # Dark mode toggle icon
+│       └── switch-light-mode.png # Light mode toggle icon
 ├── build/                        # Compiled classes
 ├── nbproject/                    # NetBeans project files
 ├── ENHANCED_FEATURES.md          # Detailed feature documentation
