@@ -18,11 +18,13 @@ A comprehensive task management application built with Java Swing, featuring adv
 - **📊 Progress Tracking**: Real-time progress bars and statistics
 - **🔍 Search & Filter**: Find tasks instantly with advanced filtering options
 - **📆 Due Date Management**: Set due dates with visual overdue indicators
-- **🎨 Modern UI**: Professional interface with icons and hover effects
+- **🎨 Modern UI**: Professional interface with custom icons and hover effects
 - **⚡ Keyboard Shortcuts**: Enhanced productivity with hotkeys
-- **🌙 Theme Support**: Built-in dark/light mode toggle
+- **🌙 Complete Dark Mode**: Full dark/light theme with custom toggle icons
 - **📈 Analytics**: Task completion statistics and insights
 - **💼 Data Export/Import**: CSV export for data portability
+- **↶↷ Undo/Redo**: Complete action history with undo/redo functionality
+- **🎯 Smart Task Management**: Instant task addition with optional detail customization
 
 ## 🚀 Getting Started
 
@@ -47,9 +49,28 @@ A comprehensive task management application built with Java Swing, featuring adv
    ```bash
    # Using NetBeans: Right-click project → Clean and Build → Run
    # Or using command line:
-   javac -cp src src/TodoListApp/TodoListApp.java
-   java -cp src TodoListApp.TodoListApp
+   javac -cp src src/TodoListApp/TodoListApp.java -d build/classes
+   java -cp build/classes TodoListApp.TodoListApp
    ```
+
+## ✨ Latest Updates
+
+### 🌙 **Complete Dark Mode Implementation**
+- **Custom Toggle Icons**: Professional dark/light mode switching with custom image icons
+- **Comprehensive Theming**: All UI components properly themed for both light and dark modes
+- **Enhanced Toolbar**: Visible toolbar with all essential functions including the dark mode toggle
+- **Optimized Contrast**: Improved text visibility and color schemes for both themes
+
+### 🔧 **Enhanced Task Management**
+- **Instant Task Addition**: Tasks are added immediately without requiring dialog confirmation
+- **Improved Deletion**: Fixed task deletion with proper confirmation and auto-save
+- **Optional Details**: Task details dialog appears after creation for optional customization
+- **Undo/Redo Support**: Complete action history with undo/redo functionality
+
+### 💾 **Robust Data Management**
+- **Dedicated Data Directory**: All data stored in `Documents\To Do List` folder
+- **Auto-Save Functionality**: Automatic saving after every action
+- **File Organization**: Clean separation of data from project files
 
 ## 🎮 Usage
 
@@ -63,13 +84,15 @@ A comprehensive task management application built with Java Swing, featuring adv
 #### Managing Tasks
 1. Select an event from the left panel
 2. Enter task description in "New Task" field
-3. Press Enter or click "Add Task"
-4. Set priority and due date in the task details dialog
+3. Press Enter or click "Add Task" (task is added instantly)
+4. Optionally customize priority and due date in the popup dialog
+5. Use the toolbar for quick access to common actions
 
 #### Task Actions
-- **✏️ Edit**: Click the edit icon to modify task details
-- **🗑️ Delete**: Click the delete icon to remove tasks
-- **☑️ Complete**: Check the checkbox to mark as completed
+- **✏️ Edit**: Click the edit icon to modify task details, priority, and due dates
+- **🗑️ Delete**: Click the delete icon to remove tasks (with confirmation)
+- **☑️ Complete**: Check the checkbox to mark tasks as completed
+- **🌙 Theme Toggle**: Click the dark mode icon in toolbar to switch themes
 
 ### Advanced Features
 
@@ -87,8 +110,17 @@ A comprehensive task management application built with Java Swing, featuring adv
 #### Keyboard Shortcuts
 - `Ctrl+N`: Focus on new event field
 - `Ctrl+T`: Focus on new task field
+- `Ctrl+Z`: Undo last action
+- `Ctrl+Y`: Redo last action
 - `Enter`: Quick actions in text fields
 - `F1`: Help and feature information
+
+#### Dark Mode Features
+- **🌙 Complete Theme System**: Full dark/light mode with comprehensive UI theming
+- **🖼️ Custom Toggle Icons**: Professional dark/light mode toggle with custom images
+- **🎨 Optimized Colors**: Enhanced contrast and readability in both themes
+- **⚡ Instant Switching**: Immediate theme changes with persistent settings
+- **📱 Modern Design**: Professional dark theme that's easy on the eyes
 
 ## 🏗️ Project Structure
 
@@ -134,19 +166,30 @@ taskText|priority|dueDate|completed
 ## 🎨 UI Components
 
 ### Custom Features
-- **Task Panels**: Zebra-striped layout with edit/delete buttons
-- **Calendar Dialog**: Custom date picker for due dates
-- **Progress Indicators**: Real-time completion tracking
-- **Icon Integration**: Professional edit and delete icons
-- **Hover Effects**: Interactive button feedback
+- **Task Panels**: Zebra-striped layout with edit/delete buttons for optimal organization
+- **Calendar Dialog**: Custom date picker for due dates with intuitive navigation
+- **Progress Indicators**: Real-time completion tracking with visual progress bars
+- **Icon Integration**: Professional edit, delete, and theme toggle icons
+- **Hover Effects**: Interactive button feedback for enhanced user experience
+- **Toolbar**: Quick access toolbar with all essential functions
+- **Dark Mode**: Complete theme system with professional dark/light mode switching
+- **Auto-Save**: Automatic data persistence to Documents folder
 
 ### Color Scheme
+
+#### Light Mode:
 - Low Priority: `#2E7D32` (Green)
 - Medium Priority: `#FF9800` (Orange)  
 - High Priority: `#F44336` (Red)
 - Urgent Priority: `#9C27B0` (Purple)
 - Overdue Tasks: Bold Red text
 - Due Soon: Orange text
+
+#### Dark Mode:
+- Enhanced priority colors with improved contrast for dark backgrounds
+- White text on dark gray panels for optimal readability
+- Professional dark theme with `#2b2b2b` main background
+- Consistent theming across all UI components
 
 ## 📋 Requirements
 
@@ -183,15 +226,17 @@ This project is developed for educational purposes as part of university coursew
 
 - **Course**: University Object-Oriented Programming Course
 - **IDE**: NetBeans for excellent Swing GUI development
-- **Icons**: Custom icons for enhanced user experience
-- **Design**: Modern UI/UX principles for better usability
+- **Design**: Modern UI/UX principles with comprehensive dark mode support
+- **Icons**: Custom-designed icons for enhanced user experience
+- **Architecture**: Advanced OOP concepts including MVC pattern and Observer design
 
 ## 📞 Support
 
 If you encounter any issues or have questions:
 1. Check the [ENHANCED_FEATURES.md](ENHANCED_FEATURES.md) for detailed feature documentation
-2. Create an issue on GitHub
-3. Review the code comments for implementation details
+2. Create an issue on GitHub with detailed description
+3. Review the comprehensive code comments for implementation details
+4. Test the dark mode toggle and task management features
 
 ## 👨‍💻 Developer
 

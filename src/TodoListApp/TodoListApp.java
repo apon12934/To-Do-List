@@ -952,21 +952,31 @@ public class TodoListApp extends javax.swing.JFrame {
         String taskText = taskField.getText().trim();
 
         if (selectedEvent != null && !taskText.isEmpty()) {
-            // Create new enhanced task
+            // Create new enhanced task with default values
             Task newTask = new Task(taskText);
             
-            // Show task details dialog for setting priority, due date, etc.
-            if (showTaskDetailsDialog(newTask)) {
-                eventTasks.get(selectedEvent).add(newTask);
-                taskField.setText("");
-                loadTasksForEvent(selectedEvent);
-                
-                // Auto-save after adding task
-                autoSaveCurrentEvent(selectedEvent);
-                
-                // Add to undo stack
-                addToUndoStack("ADD_TASK", new Object[]{selectedEvent, newTask});
-            }
+            // Add task immediately with default settings
+            eventTasks.get(selectedEvent).add(newTask);
+            taskField.setText("");
+            
+            // Auto-save after adding task
+            autoSaveCurrentEvent(selectedEvent);
+            
+            // Add to undo stack
+            addToUndoStack("ADD_TASK", new Object[]{selectedEvent, newTask});
+            
+            // Refresh display
+            loadTasksForEvent(selectedEvent);
+            
+            // Show task details dialog for setting priority, due date, etc. (optional)
+            // This allows editing but doesn't prevent the task from being added
+            SwingUtilities.invokeLater(() -> {
+                if (showTaskDetailsDialog(newTask)) {
+                    // If user made changes, save again and refresh
+                    autoSaveCurrentEvent(selectedEvent);
+                    loadTasksForEvent(selectedEvent);
+                }
+            });
         }
     }
 
@@ -1303,7 +1313,7 @@ public class TodoListApp extends javax.swing.JFrame {
         return null; // This will trigger the fallback text in createDeleteButton
     }
 
-    private void deleteTask(String eventName, String taskText, boolean isCompleted) {
+    private void deleteTask(String eventName, Task task, boolean isCompleted) {
         int result = JOptionPane.showConfirmDialog(this, 
             "Are you sure you want to delete this task?", 
             "Confirm Delete", 
@@ -1311,10 +1321,16 @@ public class TodoListApp extends javax.swing.JFrame {
 
         if (result == JOptionPane.YES_OPTION) {
             if (isCompleted) {
-                eventCompletedTasks.get(eventName).remove(taskText);
+                eventCompletedTasks.get(eventName).remove(task);
             } else {
-                eventTasks.get(eventName).remove(taskText);
+                eventTasks.get(eventName).remove(task);
             }
+            
+            // Auto-save after deleting task
+            autoSaveCurrentEvent(eventName);
+            
+            // Add to undo stack
+            addToUndoStack("DELETE_TASK", new Object[]{eventName, task, isCompleted});
             
             // Refresh the display
             loadTasksForEvent(eventName);
@@ -1876,27 +1892,6 @@ public class TodoListApp extends javax.swing.JFrame {
         if (showTaskDetailsDialog(task)) {
             loadTasksForEvent(eventName);
             addToUndoStack("EDIT_TASK", new Object[]{eventName, task});
-        }
-    }
-    
-    private void deleteTask(String eventName, Task task, boolean isCompleted) {
-        int result = JOptionPane.showConfirmDialog(this, 
-            "Are you sure you want to delete this task?", 
-            "Confirm Delete", 
-            JOptionPane.YES_NO_OPTION);
-
-        if (result == JOptionPane.YES_OPTION) {
-            if (isCompleted) {
-                eventCompletedTasks.get(eventName).remove(task);
-            } else {
-                eventTasks.get(eventName).remove(task);
-            }
-            
-            // Add to undo stack
-            addToUndoStack("DELETE_TASK", new Object[]{eventName, task, isCompleted});
-            
-            // Refresh the display
-            loadTasksForEvent(eventName);
         }
     }
     
