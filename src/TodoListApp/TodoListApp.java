@@ -147,6 +147,13 @@ public class TodoListApp extends javax.swing.JFrame {
     private JButton statsButton;
     private JButton exportButton;
     private JButton importButton;
+    private JToolBar toolbar;
+    private JPanel searchPanel;
+    private JPanel progressPanel;
+    private JPanel bottomPanel;
+    private JLabel searchLabel;
+    private JLabel filterLabel;
+    private JLabel progressLabel;
 
     /**
      * Creates new form TodoListApp with enhanced features
@@ -659,7 +666,7 @@ public class TodoListApp extends javax.swing.JFrame {
     
     private void setupEnhancedUI() {
         // Add toolbar with quick actions
-        JToolBar toolbar = new JToolBar();
+        toolbar = new JToolBar();
         toolbar.setFloatable(false);
         
         // New Event button
@@ -688,8 +695,16 @@ public class TodoListApp extends javax.swing.JFrame {
         
         // Dark mode toggle with images
         try {
-            darkModeIcon = new ImageIcon(getClass().getClassLoader().getResource("images/switch-dark-mode.png"));
-            lightModeIcon = new ImageIcon(getClass().getClassLoader().getResource("images/switch-light-mode.png"));
+            // Load and scale images to proper size
+            ImageIcon originalDarkIcon = new ImageIcon(getClass().getClassLoader().getResource("images/switch-dark-mode.png"));
+            ImageIcon originalLightIcon = new ImageIcon(getClass().getClassLoader().getResource("images/switch-light-mode.png"));
+            
+            // Scale icons to 24x24 for better fit
+            Image darkImg = originalDarkIcon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
+            Image lightImg = originalLightIcon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
+            
+            darkModeIcon = new ImageIcon(darkImg);
+            lightModeIcon = new ImageIcon(lightImg);
             
             darkModeToggle = new JButton(isDarkMode ? lightModeIcon : darkModeIcon);
             darkModeToggle.setToolTipText("Toggle dark/light theme");
@@ -697,6 +712,8 @@ public class TodoListApp extends javax.swing.JFrame {
             darkModeToggle.setBorderPainted(false);
             darkModeToggle.setContentAreaFilled(false);
             darkModeToggle.setFocusPainted(false);
+            darkModeToggle.setHorizontalAlignment(SwingConstants.CENTER);
+            darkModeToggle.setVerticalAlignment(SwingConstants.CENTER);
         } catch (Exception e) {
             // Fallback to text if images not found
             darkModeToggle = new JButton("🌙 Dark Mode");
@@ -732,8 +749,9 @@ public class TodoListApp extends javax.swing.JFrame {
         toolbar.add(darkModeToggle);
         
         // Add search functionality
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        searchPanel.add(new JLabel("Search:"));
+        searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        searchLabel = new JLabel("Search:");
+        searchPanel.add(searchLabel);
         
         searchField = new JTextField(15);
         searchField.setToolTipText("Search tasks and events");
@@ -744,7 +762,8 @@ public class TodoListApp extends javax.swing.JFrame {
         filterComboBox.addActionListener(e -> applyFilter());
         
         searchPanel.add(searchField);
-        searchPanel.add(new JLabel("Filter:"));
+        filterLabel = new JLabel("Filter:");
+        searchPanel.add(filterLabel);
         searchPanel.add(filterComboBox);
         
         // Add progress bar
@@ -760,11 +779,12 @@ public class TodoListApp extends javax.swing.JFrame {
         contentPane.add(toolbar, BorderLayout.NORTH);
         
         // Add search and progress to the bottom
-        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.add(searchPanel, BorderLayout.WEST);
         
-        JPanel progressPanel = new JPanel(new BorderLayout());
-        progressPanel.add(new JLabel("Progress: "), BorderLayout.WEST);
+        progressPanel = new JPanel(new BorderLayout());
+        progressLabel = new JLabel("Progress: ");
+        progressPanel.add(progressLabel, BorderLayout.WEST);
         progressPanel.add(overallProgressBar, BorderLayout.CENTER);
         progressPanel.add(statsLabel, BorderLayout.EAST);
         
@@ -2107,6 +2127,43 @@ public class TodoListApp extends javax.swing.JFrame {
         // Labels
         selectedEventTitle.setForeground(fgColor);
         selectedEventDate.setForeground(fgColor);
+        
+        // Form labels
+        if (jLabel1 != null) {
+            jLabel1.setForeground(fgColor);
+        }
+        if (jLabel2 != null) {
+            jLabel2.setForeground(fgColor);
+        }
+        if (jLabel3 != null) {
+            jLabel3.setForeground(fgColor);
+        }
+        
+        // Bottom panel components
+        if (bottomPanel != null) {
+            bottomPanel.setBackground(panelBgColor);
+        }
+        if (searchPanel != null) {
+            searchPanel.setBackground(panelBgColor);
+        }
+        if (progressPanel != null) {
+            progressPanel.setBackground(panelBgColor);
+        }
+        if (searchLabel != null) {
+            searchLabel.setForeground(fgColor);
+        }
+        if (filterLabel != null) {
+            filterLabel.setForeground(fgColor);
+        }
+        if (progressLabel != null) {
+            progressLabel.setForeground(fgColor);
+        }
+        
+        // Toolbar
+        if (toolbar != null) {
+            toolbar.setBackground(panelBgColor);
+        }
+        
         if (statsLabel != null) {
             statsLabel.setForeground(fgColor);
         }
@@ -2114,6 +2171,15 @@ public class TodoListApp extends javax.swing.JFrame {
         // Split panes
         jSplitPane1.setBackground(bgColor);
         jSplitPane2.setBackground(bgColor);
+        
+        // Event panel border
+        eventPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(
+            javax.swing.BorderFactory.createLineBorder(borderColor), 
+            "Events", 
+            javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, 
+            javax.swing.border.TitledBorder.DEFAULT_POSITION, 
+            null, 
+            fgColor));
         
         // Scroll pane borders
         todoScrollPane.setBorder(javax.swing.BorderFactory.createTitledBorder(
