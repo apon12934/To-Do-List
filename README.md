@@ -34,8 +34,8 @@ A comprehensive task management application built with Java Swing, featuring adv
 ### Installation
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/apon12934/JavaApplication1.git
-   cd JavaApplication1
+   git clone https://github.com/apon12934/To-Do-List.git
+   cd To-Do-List
    ```
 
 2. **Open in NetBeans:**
