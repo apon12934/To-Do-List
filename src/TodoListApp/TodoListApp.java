@@ -9,8 +9,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -123,6 +121,9 @@ public class TodoListApp extends javax.swing.JFrame {
     private DefaultListModel<String> eventListModel;
     private java.util.Date selectedDate;
     
+    // Data storage directory
+    private final File dataDirectory;
+    
     // New UI enhancement fields
     private boolean isDarkMode = false;
     private JTextField searchField;
@@ -154,6 +155,9 @@ public class TodoListApp extends javax.swing.JFrame {
         eventCategories = new HashMap<>();
         selectedDate = new java.util.Date(); // Initialize with current date
         
+        // Initialize data directory
+        dataDirectory = initializeDataDirectory();
+        
         // Initialize new UI enhancement components
         undoStack = new Stack<>();
         redoStack = new Stack<>();
@@ -162,6 +166,32 @@ public class TodoListApp extends javax.swing.JFrame {
         setupCustomComponents();
         setupEventListeners();
         loadEventsFromFiles();
+    }
+    
+    /**
+     * Initialize and create the data directory for storing todo list files
+     * @return File object representing the data directory
+     */
+    private File initializeDataDirectory() {
+        // Get user's Documents folder
+        String userHome = System.getProperty("user.home");
+        File documentsDir = new File(userHome, "Documents");
+        File todoDataDir = new File(documentsDir, "To Do List");
+        
+        // Create directory if it doesn't exist
+        if (!todoDataDir.exists()) {
+            boolean created = todoDataDir.mkdirs();
+            if (created) {
+                System.out.println("Created data directory: " + todoDataDir.getAbsolutePath());
+            } else {
+                System.err.println("Failed to create data directory: " + todoDataDir.getAbsolutePath());
+                // Fallback to user home directory
+                todoDataDir = new File(userHome, "To Do List");
+                todoDataDir.mkdirs();
+            }
+        }
+        
+        return todoDataDir;
     }
 
     /**
@@ -862,8 +892,8 @@ public class TodoListApp extends javax.swing.JFrame {
             
             // Delete files
             try {
-                File taskFile = new File(selectedEvent + ".txt");
-                File completedFile = new File("COMPLETED_" + selectedEvent + ".txt");
+                File taskFile = new File(dataDirectory, selectedEvent + ".txt");
+                File completedFile = new File(dataDirectory, "COMPLETED_" + selectedEvent + ".txt");
                 
                 if (taskFile.exists()) {
                     taskFile.delete();
@@ -901,6 +931,9 @@ public class TodoListApp extends javax.swing.JFrame {
                 eventTasks.get(selectedEvent).add(newTask);
                 taskField.setText("");
                 loadTasksForEvent(selectedEvent);
+                
+                // Auto-save after adding task
+                autoSaveCurrentEvent(selectedEvent);
                 
                 // Add to undo stack
                 addToUndoStack("ADD_TASK", new Object[]{selectedEvent, newTask});
@@ -1255,6 +1288,9 @@ public class TodoListApp extends javax.swing.JFrame {
                 }
             }
 
+            // Auto-save after task state change
+            autoSaveCurrentEvent(eventName);
+            
             // Refresh the display
             SwingUtilities.invokeLater(() -> loadTasksForEvent(eventName));
         }
@@ -1315,8 +1351,8 @@ public class TodoListApp extends javax.swing.JFrame {
             
             // Delete files
             try {
-                File taskFile = new File(eventName + ".txt");
-                File completedFile = new File("COMPLETED_" + eventName + ".txt");
+                File taskFile = new File(dataDirectory, eventName + ".txt");
+                File completedFile = new File(dataDirectory, "COMPLETED_" + eventName + ".txt");
                 
                 if (taskFile.exists()) {
                     taskFile.delete();
@@ -1346,8 +1382,8 @@ public class TodoListApp extends javax.swing.JFrame {
 
     private void loadEventsFromFiles() {
         try {
-            Path currentDir = Paths.get(System.getProperty("user.dir"));
-            try (var pathStream = Files.list(currentDir)) {
+            // Use the data directory instead of current working directory
+            try (var pathStream = Files.list(dataDirectory.toPath())) {
                 pathStream.filter(path -> path.toString().endsWith(".txt"))
                     .filter(path -> !path.getFileName().toString().startsWith("COMPLETED_"))
                     .forEach(path -> {
@@ -1370,7 +1406,7 @@ public class TodoListApp extends javax.swing.JFrame {
     private void loadTasksFromFile(String eventName) {
         // Load pending tasks
         try {
-            File taskFile = new File(eventName + ".txt");
+            File taskFile = new File(dataDirectory, eventName + ".txt");
             if (taskFile.exists()) {
                 List<String> taskLines = Files.readAllLines(taskFile.toPath());
                 List<Task> tasks = new ArrayList<>();
@@ -1388,7 +1424,7 @@ public class TodoListApp extends javax.swing.JFrame {
 
         // Load completed tasks
         try {
-            File completedFile = new File("COMPLETED_" + eventName + ".txt");
+            File completedFile = new File(dataDirectory, "COMPLETED_" + eventName + ".txt");
             if (completedFile.exists()) {
                 List<String> taskLines = Files.readAllLines(completedFile.toPath());
                 List<Task> completedTasks = new ArrayList<>();
@@ -1426,7 +1462,7 @@ public class TodoListApp extends javax.swing.JFrame {
 
         try {
             // Save pending tasks
-            File taskFile = new File(selectedEvent + ".txt");
+            File taskFile = new File(dataDirectory, selectedEvent + ".txt");
             try (PrintWriter writer = new PrintWriter(new FileWriter(taskFile))) {
                 List<Task> tasks = eventTasks.get(selectedEvent);
                 if (tasks != null) {
@@ -1437,7 +1473,7 @@ public class TodoListApp extends javax.swing.JFrame {
             }
 
             // Save completed tasks
-            File completedFile = new File("COMPLETED_" + selectedEvent + ".txt");
+            File completedFile = new File(dataDirectory, "COMPLETED_" + selectedEvent + ".txt");
             try (PrintWriter writer = new PrintWriter(new FileWriter(completedFile))) {
                 List<Task> completedTasks = eventCompletedTasks.get(selectedEvent);
                 if (completedTasks != null) {
@@ -1451,6 +1487,39 @@ public class TodoListApp extends javax.swing.JFrame {
 
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "Error saving: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    /**
+     * Auto-save event data without showing success message
+     * @param eventName the event to save
+     */
+    private void autoSaveCurrentEvent(String eventName) {
+        try {
+            // Save pending tasks
+            File taskFile = new File(dataDirectory, eventName + ".txt");
+            try (PrintWriter writer = new PrintWriter(new FileWriter(taskFile))) {
+                List<Task> tasks = eventTasks.get(eventName);
+                if (tasks != null) {
+                    for (Task task : tasks) {
+                        writer.println(taskToString(task));
+                    }
+                }
+            }
+
+            // Save completed tasks
+            File completedFile = new File(dataDirectory, "COMPLETED_" + eventName + ".txt");
+            try (PrintWriter writer = new PrintWriter(new FileWriter(completedFile))) {
+                List<Task> completedTasks = eventCompletedTasks.get(eventName);
+                if (completedTasks != null) {
+                    for (Task task : completedTasks) {
+                        writer.println(taskToString(task));
+                    }
+                }
+            }
+
+        } catch (IOException e) {
+            System.err.println("Auto-save error for " + eventName + ": " + e.getMessage());
         }
     }
     

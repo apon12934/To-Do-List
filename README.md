@@ -127,6 +127,8 @@ Tasks are stored in plain text files with the format:
 taskText|priority|dueDate|completed
 ```
 
+**Data Location**: All task and event data is automatically stored in your `Documents\To Do List` folder (e.g., `C:\Users\YourName\Documents\To Do List`) to keep your project directory clean and prevent data files from appearing in Git.
+
 ## 🎨 UI Components
 
 ### Custom Features
