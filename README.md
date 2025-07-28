@@ -48,9 +48,16 @@ A comprehensive task management application built with Java Swing, featuring adv
 3. **Build and Run:**
    ```bash
    # Using NetBeans: Right-click project → Clean and Build → Run
+   
    # Or using command line:
-   javac -cp src src/TodoListApp/TodoListApp.java -d build/classes
-   java -cp build/classes TodoListApp.TodoListApp
+   # Method 1 (Recommended):
+   javac -cp src -d build/classes src/TodoListApp/TodoListApp.java
+   java -cp build/classes TodoListApp
+   
+   # Method 2 (From src directory):
+   cd src/TodoListApp
+   javac TodoListApp.java
+   java TodoListApp
    ```
 
 ## ✨ Latest Updates
